@@ -1,0 +1,13 @@
+# ITINERARY BACKEND
+# POST /trips - Creating a Trip (validate dates, assign owner, save)
+# GET /trips/:id - Reading a Trip (permission check, return with days/stops)
+# PATCH /trips/:id - Updating a Trip (validate, check ownership, write)
+# DELETE /trips/:id - Deleting a Trip (cascade delete days/stops/notes)
+# PATCH /trips/:id/reorder - Reordering Days & Stops (accept sort order, persist)
+# POST /trips/:id/days/:day_id/stops - Adding an event (validate day, save)
+# PATCH /trips/:id/days/:day_id/stops/:stop_id - Updating an event (drag interaction)
+# DELETE /trips/:id/days/:day_id/stops/:stop_id - Removing an event (reindex)
+# PATCH /trips/:id/stops/reorder - Drag & Drop Support (validate time slot conflicts)
+# GET /places/search - Place Search (query Google Places API, cache)
+# GET /places/travel-time - Travel Time (accept origin/destination, return ETAs)
+# POST /trips/:id/share - Sharing & Collaboration (generate token, set permissions)
