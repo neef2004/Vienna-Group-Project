@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 //import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-//import RegisterPage from './pages/RegisterPage';
+import RegisterPage from './pages/RegisterPage';
 //import DashboardPage from './pages/DashboardPage';
 //import NotFoundPage from './pages/NotFoundPage';
 
@@ -19,6 +19,7 @@ function App() {
     <BrowserRouter> {/*routes to different pages based on path in the url*/}
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );
