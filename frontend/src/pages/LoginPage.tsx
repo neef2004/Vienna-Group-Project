@@ -8,7 +8,7 @@ await fetch("api/login", ...) and make a login request
 
 note that verification is handled by the backend, we are just sending
 the information over to the backend and displaying the response
-*/
+
 async function loginUser(email: string, password: string) {
   console.log("Logging in with:", email, password);
 
@@ -18,6 +18,29 @@ async function loginUser(email: string, password: string) {
       email: email,
     },
   };
+}
+*/
+
+async function loginUser(email: string, password: string) {
+  const response = await fetch("/api/login", {
+    //sends an HTTP request to the backend route
+    method: "POST", //POST because we are sending private data
+    headers: {
+      //tells the backend that we are sending information as JSON
+      "Content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email: email,
+      password: password,
+    }), //this is the actual data
+  }); //end of the fetch call
+
+  const data = await response.json(); //reads the JSON respinse to tehe backend
+
+  if (!response.ok) {
+    throw new Error(data.error || "login failed"); //if the respinse failed then give an error message
+  }
+  return data;
 }
 
 function LoginPage() {
@@ -48,14 +71,17 @@ function LoginPage() {
         setError("Invalid email or password");
         return;
       }
+      //we need to store the token of the user for future api calls that may need authorization
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user));
 
-      //otherwise log success
+      //log success
       console.log("Login successfull:", result.user);
 
       //later we will have to redirect to the dashboard here
       //navigate(dashboard)
-    } catch {
-      setError("Something went wrong. Please try again");
+    } catch(error){
+      setError(error instanceof Error ? error.message : "Something went wrong. Please try again");
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +103,7 @@ function LoginPage() {
         <TextInput
           label="Password"
           name="password"
+          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"

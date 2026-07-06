@@ -1,4 +1,4 @@
-#!/Users/yafetus/Documents/TEST_LOGIN_AUTH/TEST_LOGIN_AUTH/venv/bin/python3
+#!/Users/hanifahadi/Desktop/University/cs_321/vienna/itinerary-app/backend/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

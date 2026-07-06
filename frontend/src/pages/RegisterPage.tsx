@@ -4,22 +4,33 @@ import TextInput from "../components/ui/TextInput";
 async function registerUser(
   email: string,
   password: string,
-  retypePassword: string
+  confirm_password: string
 ) {
-  console.log("Creating user with: ", email, password);
-
-  return {
-    success: true,
-    user: {
-      email: email,
+  const response = await fetch("/api/signup", {
+    //we are sending an http request to the backend rout
+    method: "POST", //post for private data
+    headers: {
+      "Content-type": "application/json",
     },
-  };
+    body: JSON.stringify({
+      email: email,
+      password: password,
+      confirm_password: confirm_password,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "signup failed");
+  }
+  return data;
 }
 
 function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [retypePassword, setRetypePassword] = useState("");
+  const [confirm_password, setConfirm_password] = useState("");
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +42,13 @@ function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const result = await registerUser(email, password, retypePassword);
-    } catch {
-      setError("Something went wrong. Please try again");
+      const result = await registerUser(email, password, confirm_password);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -54,6 +69,7 @@ function RegisterPage() {
         <TextInput
           label="Password"
           name="password"
+          type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
@@ -62,15 +78,16 @@ function RegisterPage() {
         <TextInput
           label="Retype Password"
           name="retype password"
-          value={retypePassword}
-          onChange={(event) => setRetypePassword(event.target.value)}
+          type="password"
+          value={confirm_password}
+          onChange={(event) => setConfirm_password(event.target.value)}
           placeholder="Please retype password"
         />
 
         {error && <p>{error}</p>}
 
         <button type="submit" disabled={isLoading}>
-            {isLoading ? "Registering" : "Register"}
+          {isLoading ? "Registering" : "Register"}
         </button>
       </form>
     </main>
