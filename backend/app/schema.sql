@@ -1,37 +1,85 @@
--- schema.sql
--- Defines the structure of our database tables.
--- This file is run ONCE by init_db() (in db.py) to set up app.db
--- from scratch. Running it again will WIPE any existing data,
--- because of the DROP TABLE statement below — so don't re-run this
--- once you have real users you care about.
-
--- "IF EXISTS" prevents an error if the table doesn't exist yet
--- (e.g. the very first time you ever run this).
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS trip;
+DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS itinerary;
 
 CREATE TABLE users (
-    -- A unique numeric ID for each user, automatically generated
-    -- and incremented by SQLite (1, 2, 3, ...). This is our primary
-    -- key — the value we use internally to refer to "this exact user"
-    -- (e.g. it's what gets stored inside the JWT identity claim).
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    -- The user's email address. TEXT is SQLite's generic string type.
-    -- UNIQUE means the database itself will reject any INSERT that
-    -- tries to use an email already in the table — this is our real
-    -- safety net against duplicate accounts, backing up the
-    -- application-level check in signup(). NOT NULL means this field
-    -- can never be left empty.
     email TEXT UNIQUE NOT NULL,
-
-    -- The HASHED password — never the raw password. This column stores
-    -- the output of generate_password_hash() from user.py, which looks
-    -- something like "pbkdf2:sha256:600000$somesalt$somehash".
-    -- NOT NULL means every user must have a password set.
     password_hash TEXT NOT NULL,
-
-    -- Automatically records when each user row was created.
-    -- CURRENT_TIMESTAMP is a SQLite built-in that fills this in for you —
-    -- you never need to set this manually when inserting a new user.
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_reset_token (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE trip (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE event (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
+    timezone TEXT DEFAULT 'UTC',
+    rrule TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES trip(id)
+);
+
+CREATE TABLE itinerary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL,
+    day_number INTEGER NOT NULL,
+    title TEXT,
+    description TEXT,
+    activities TEXT,
+    completed INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES trip(id)
+);
+
+CREATE TABLE reminder (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    reminder_time TIMESTAMP NOT NULL,
+    notification_type TEXT DEFAULT 'email',
+    sent INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES event(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE trip_collaborator (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    permission_level TEXT DEFAULT 'editor',
+    accepted INTEGER DEFAULT 0,
+    invited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    accepted_at TIMESTAMP,
+    FOREIGN KEY (trip_id) REFERENCES trip(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    UNIQUE(trip_id, user_id)
 );

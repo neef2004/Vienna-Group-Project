@@ -35,7 +35,7 @@ def login():
     }), 200
 
 
-@auth_bp.route("/signup", methods=['POST'])
+@auth_bp.route("/signup", methods=['POST']) # /register 
 def signup():
     data = request.get_json(silent=True)
     if not data:
