@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TextInput from "../components/ui/TextInput";
+import { useNavigate } from "react-router-dom";
 
 /*
 fake loginUser function that pretends to make an API call.
@@ -20,6 +21,8 @@ async function loginUser(email: string, password: string) {
   };
 }
 */
+
+
 
 async function loginUser(email: string, password: string) {
   const response = await fetch("/api/login", {
@@ -52,6 +55,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const navigate = useNavigate(); //this is a react-router-dom hook that allows us to redirect the user to another page
   /*
   React.FormEvent is a custom type from react.
   <HTMLFormElement> is a generic type parameter that tells TypeScript
@@ -119,6 +123,7 @@ function LoginPage() {
           {isLoading ? "Logging in..." : "Login"}
         </button>
       </form>
+      <button onClick={() => navigate("/register")}>Don't have an account? Sign Up!</button>
     </main>
   );
 }
