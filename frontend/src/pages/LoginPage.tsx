@@ -93,7 +93,7 @@ function LoginPage() {
 
   return (
     <main>
-      <h1>Login</h1>
+      <h1>Welcome Back!</h1>
       <form onSubmit={handleSubmit}>
         {/*text input for email*/}
         <TextInput
@@ -112,6 +112,7 @@ function LoginPage() {
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Enter your password"
         />
+
 
         {/* If there is an error, render the error */}
         {error && <p>{error}</p>}
