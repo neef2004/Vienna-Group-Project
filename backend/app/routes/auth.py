@@ -30,7 +30,7 @@ def login():
 
     return jsonify({
         "success": True,
-        "user": {"email": user["email"]},
+        "user": {"id": user["id"], "email": user["email"]},
         "token": token
     }), 200
 
@@ -66,7 +66,9 @@ def signup():
 
     create_user(email, password)
 
-    return jsonify({"success": True, "user": {"email": email}}), 201
+    user = get_user_by_email(email)
+
+    return jsonify({"success": True, "user": {"id": user["id"], "email": email}}), 201
 
 @auth_bp.route("/forgot-password", methods=['POST'])
 def forgot_password():
