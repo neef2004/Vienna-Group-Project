@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 //import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ItineraryPage from "./pages/ItineraryPage";
 //import HomePage from './pages/HomePage';
 //import DashboardPage from './pages/DashboardPage';
 //import NotFoundPage from './pages/NotFoundPage';
@@ -17,8 +18,11 @@ import RegisterPage from './pages/RegisterPage';
 
 function App() {
   return (
-    <BrowserRouter> {/*routes to different pages based on path in the url*/}
+    <BrowserRouter>
+      {" "}
+      {/*routes to different pages based on path in the url*/}
       <Routes>
+        <Route path="/itinerary" element={<ItineraryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<LoginPage />} />
