@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./ItineraryPage.css";
 
 /*
   This type describes a trip option in the dropdown.
