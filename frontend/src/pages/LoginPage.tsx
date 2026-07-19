@@ -77,10 +77,14 @@ function LoginPage() {
       }
       //we need to store the token of the user for future api calls that may need authorization
       localStorage.setItem("token", result.token);
+
       localStorage.setItem("user", JSON.stringify(result.user));
 
       //log success
       console.log("Login successfull:", result.user);
+
+      //navigate to the itinerary page
+      navigate("/itinerary", {replace: true}) //replace true replaces the current page in history instead of adding a new page so you can use back arrows
 
       //later we will have to redirect to the dashboard here
       //navigate(dashboard)
