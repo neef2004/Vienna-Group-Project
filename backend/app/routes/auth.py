@@ -70,6 +70,7 @@ def signup():
 
     return jsonify({"success": True, "user": {"id": user["id"], "email": email}}), 201
 
+#were not using ts
 @auth_bp.route("/forgot-password", methods=['POST'])
 def forgot_password():
     data = request.get_json(silent=True)
