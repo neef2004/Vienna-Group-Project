@@ -52,7 +52,7 @@ def delete_trip(trip_id):
 
 # create event as part of trip with trip_id
 # attributes: trip_id, title, descriptioin, start and end time, timezone, rrule
-# rrule: recurring event rule for icalendar 
+# rrule: recurring event rule for icalendar
 def create_event(trip_id, title, description, start_time, end_time, timezone, rrule):
     db = get_db()
     
@@ -81,9 +81,9 @@ def get_events_by_trip(trip_id):
         (trip_id,)
     ).fetchall()
 
-# update event: event_id 
+# update event: event_id
 # attributes: event_id, title, descriptioin, start and end time, timezone, rrule
-# rrule: recurring event rule for icalendar 
+# rrule: recurring event rule for icalendar
 def update_event(event_id, title, description, start_time, end_time, timezone, rrule):
     db = get_db()
     
@@ -134,7 +134,7 @@ def get_user_permission_for_trip(trip_id, user_id):
     
     return result['permission_level'] if result else None
 
-# set invitation as accepted for a user 
+# set invitation as accepted for a user
 def accept_trip_invitation(trip_id, user_id):
     db = get_db()
     
