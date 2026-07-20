@@ -1,8 +1,12 @@
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS trip;
-DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS trip_collaborator;
+DROP TABLE IF EXISTS reminder;
 DROP TABLE IF EXISTS itinerary;
+DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS password_reset_token;
+DROP TABLE IF EXISTS trip;
+DROP TABLE IF EXISTS users;
 
+-- registered accounts, login credentials
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
@@ -10,6 +14,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- one-time tokens for the forgot-password flow, with expiry and used flag
 CREATE TABLE password_reset_token (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -20,6 +25,7 @@ CREATE TABLE password_reset_token (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- a trip owned by a user, spanning a start and end date
 CREATE TABLE trip (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -32,6 +38,7 @@ CREATE TABLE trip (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- a scheduled item within a trip; supports timezones and recurrence via rrule
 CREATE TABLE event (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trip_id INTEGER NOT NULL,
@@ -46,6 +53,7 @@ CREATE TABLE event (
     FOREIGN KEY (trip_id) REFERENCES trip(id)
 );
 
+-- per-day plan for a trip, with activities and a completed flag
 CREATE TABLE itinerary (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trip_id INTEGER NOT NULL,
@@ -59,6 +67,7 @@ CREATE TABLE itinerary (
     FOREIGN KEY (trip_id) REFERENCES trip(id)
 );
 
+-- scheduled notification for an event, tracks delivery type and whether it was sent
 CREATE TABLE reminder (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     event_id INTEGER NOT NULL,
@@ -71,6 +80,7 @@ CREATE TABLE reminder (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- users invited to a trip, with permission level and invite acceptance status
 CREATE TABLE trip_collaborator (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trip_id INTEGER NOT NULL,

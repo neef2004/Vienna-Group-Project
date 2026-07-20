@@ -7,7 +7,8 @@ from app.routes.reminders import reminders_bp
 from app.routes.collaborators import collaborators_bp
 from app import db as db_module
 
-
+# create and configure the Flask app
+# JWT auth, database, and /api routes
 def create_app():
     app = Flask(__name__)
 
@@ -19,5 +20,9 @@ def create_app():
     db_module.init_app(app)
 
     app.register_blueprint(auth_bp, url_prefix="/api")
+    app.register_blueprint(trips_bp, url_prefix="/api")
+    app.register_blueprint(itineraries_bp, url_prefix="/api")
+    app.register_blueprint(reminders_bp, url_prefix="/api")
+    app.register_blueprint(collaborators_bp, url_prefix="/api")
 
     return app

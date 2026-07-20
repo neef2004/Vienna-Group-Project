@@ -14,9 +14,11 @@ from app.models.itinerary import (
     get_trip_completion_status
 )
 
+# all urls start with /api/trips
 itineraries_bp = Blueprint('itineraries', __name__, url_prefix='/api/trips')
 
-
+# login check for every route below
+# header: X-User-ID (int), required
 def require_auth(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -26,7 +28,11 @@ def require_auth(f):
         return f(*args, user_id=int(user_id), **kwargs)
     return decorated_function
 
-
+# GET /api/trips/<trip_id(int, required)>/itinerary, list all itinerary days for a trip.
+# method: GET
+# header: X-User-ID (int)
+# body: none
+# return list of itinerary entries (200), 404 if no trip, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary', methods=['GET'])
 @require_auth
 def get_itinerary(trip_id, user_id):
@@ -42,7 +48,13 @@ def get_itinerary(trip_id, user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
+# POST /api/trips/<trip_id(int, required)>/itinerary, add one itinerary day to a trip.
+# method: POST
+# header: X-User-ID (int)
+# Content-Type: application/json
+# body(json): day_number(int, required), title(str), description(str), activities(str/list)
+# return new itinerary entry (201), 400 if no day_number, 404 if no trip,
+#        409 if that day already exists, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary', methods=['POST'])
 @require_auth
 def create_itinerary_entry(trip_id, user_id):
@@ -77,7 +89,12 @@ def create_itinerary_entry(trip_id, user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
+# PUT /api/trips/<trip_id(int, required)>/itinerary/<day_number(int, required)>, change one itinerary day. fields not sent keep old value.
+# method: PUT
+# header: X-User-ID (int)
+# Content-Type: application/json
+# body(json, all optional): title(str), description(str), activities(str/list)
+# return updated itinerary entry (200), 404 if no trip or no entry, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary/<int:day_number>', methods=['PUT'])
 @require_auth
 def update_itinerary_entry(trip_id, day_number, user_id):
@@ -106,7 +123,11 @@ def update_itinerary_entry(trip_id, day_number, user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
+# DELETE /api/trips/<trip_id(int, required)>/itinerary/<day_number(int, required)>, remove one itinerary day.
+# method: DELETE
+# header: X-User-ID (int)
+# body: none
+# return {"message":"Itinerary entry deleted"} (200), 404 if no trip or no entry, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary/<int:day_number>', methods=['DELETE'])
 @require_auth
 def delete_itinerary_entry(trip_id, day_number, user_id):
@@ -126,7 +147,12 @@ def delete_itinerary_entry(trip_id, day_number, user_id):
         return jsonify({'message': 'Itinerary entry deleted'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+# PUT /api/trips/<trip_id(int, required)>/itinerary/<day_number(int, required)>/complete, mark one itinerary day as done.
+# method: PUT
+# header: X-User-ID (int)
+# body: none
+# return {"message":"Marked complete"} (200), 404 if no trip or no entry, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary/<int:day_number>/complete', methods=['PUT'])
 @require_auth
 def mark_complete(trip_id, day_number, user_id):
@@ -144,7 +170,12 @@ def mark_complete(trip_id, day_number, user_id):
         return jsonify({'message': 'Marked complete'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+# GET /api/trips/<trip_id(int, required)>/completion-status, get how much of the trip itinerary is done.
+# method: GET
+# header: X-User-ID (int)
+# body: none
+# return completion status object (200), 404 if no trip, 500 if error
 @itineraries_bp.route('/<int:trip_id>/completion-status', methods=['GET'])
 @require_auth
 def get_completion_status(trip_id, user_id):
@@ -158,7 +189,12 @@ def get_completion_status(trip_id, user_id):
         return jsonify(status), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+# PUT /api/trips/<trip_id(int, required)>/itinerary/<day_number(int, required)>/incomplete, mark one itinerary day as not done.
+# method: PUT
+# header: X-User-ID (int)
+# body: none
+# return {"message":"Marked incomplete"} (200), 404 if no trip or no entry, 500 if error
 @itineraries_bp.route('/<int:trip_id>/itinerary/<int:day_number>/incomplete', methods=['PUT'])
 @require_auth
 def mark_incomplete(trip_id, day_number, user_id):
