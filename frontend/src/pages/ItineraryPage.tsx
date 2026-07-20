@@ -102,6 +102,10 @@ function ItineraryPage() {
   const [selectedDay, setSelectedDay] = useState(1);
 
   /*
+    
+  */
+
+  /*
     We only have one fake trip right now, but find() keeps the code shaped
     like it will be when the backend gives us multiple trips.
 

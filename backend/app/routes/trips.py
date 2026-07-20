@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from datetime import datetime
 from functools import wraps
 from app.models.trip import (
@@ -30,12 +31,10 @@ trips_bp = Blueprint('trips', __name__, url_prefix='/api/trips')
 def require_auth(f):
     @wraps(f) # keep the wrapped route's name/info intact
     def decorated_function(*args, **kwargs):
-        user_id = request.headers.get('X-User-ID') # header value is text or None
-        if not user_id:
-            # no header means not logged in
-            return jsonify({'error': 'Unauthorized'}), 401
+        verify_jwt_in_request()
+        user_id = int(get_jwt_identity()) # header value is text or None
         # convert to int and hand user_id to the route
-        return f(*args, user_id=int(user_id), **kwargs)
+        return f(*args, user_id=user_id, **kwargs)
     return decorated_function
 
 # GET /api/trips, list all trips of the user.
