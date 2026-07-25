@@ -20,9 +20,9 @@ def create_app():
     db_module.init_app(app)
 
     app.register_blueprint(auth_bp, url_prefix="/api")
-    app.register_blueprint(trips_bp, url_prefix="/api")
-    app.register_blueprint(itineraries_bp, url_prefix="/api")
-    app.register_blueprint(reminders_bp, url_prefix="/api")
-    app.register_blueprint(collaborators_bp, url_prefix="/api")
+    app.register_blueprint(trips_bp)
+    app.register_blueprint(itineraries_bp)
+    app.register_blueprint(reminders_bp)
+    app.register_blueprint(collaborators_bp)
 
     return app

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from datetime import datetime
 from functools import wraps
 
@@ -18,14 +19,13 @@ from app.models.itinerary import (
 itineraries_bp = Blueprint('itineraries', __name__, url_prefix='/api/trips')
 
 # login check for every route below
-# header: X-User-ID (int), required
+# header: Authorization: Bearer <token>
 def require_auth(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        user_id = request.headers.get('X-User-ID')
-        if not user_id:
-            return jsonify({'error': 'Unauthorized'}), 401
-        return f(*args, user_id=int(user_id), **kwargs)
+        verify_jwt_in_request()
+        user_id = int(get_jwt_identity())
+        return f(*args, user_id=user_id, **kwargs)
     return decorated_function
 
 # GET /api/trips/<trip_id(int, required)>/itinerary, list all itinerary days for a trip.

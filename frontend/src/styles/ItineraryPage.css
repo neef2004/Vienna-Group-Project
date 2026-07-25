@@ -82,13 +82,112 @@
 
 .selected-trip-summary,
 .day-selector,
-.itinerary-list {
+.itinerary-list,
+.new-trip-panel,
+.new-event-panel,
+.trips-empty-state {
   width: min(1100px, 100%);
   margin: 0 auto;
 }
 
+.new-trip-panel {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: white;
+}
+
+.new-event-panel {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: white;
+}
+
+.new-event-panel h2 {
+  margin: 0;
+}
+
+.new-event-panel > p {
+  margin: 0.25rem 0 1rem;
+  color: #5f6368;
+}
+
+.new-trip-panel h2,
+.trips-empty-state h2 {
+  margin: 0 0 1rem;
+}
+
+.new-trip-form,
+.new-event-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.new-trip-form label,
+.new-event-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: #5f6368;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.new-trip-form input,
+.new-trip-form textarea,
+.new-event-form input,
+.new-event-form textarea,
+.day-selector select {
+  border: 1px solid #d7dce2;
+  border-radius: 8px;
+  padding: 0.7rem 0.75rem;
+  background: white;
+  color: #202124;
+  font: inherit;
+}
+
+.trip-date-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.event-time-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.new-trip-form .primary-action,
+.new-event-form .primary-action {
+  justify-self: start;
+}
+
+.itinerary-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.trips-empty-state {
+  box-sizing: border-box;
+}
+
+.trips-empty-state p {
+  margin: 0;
+}
+
 .selected-trip-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.selected-trip-summary p {
+  margin: 0.35rem 0 0;
 }
 
 .day-selector {
@@ -202,5 +301,18 @@
 
   .item-actions {
     justify-content: start;
+  }
+
+  .trip-date-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .event-time-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-trip-summary {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
