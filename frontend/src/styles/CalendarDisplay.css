@@ -1,7 +1,7 @@
 .calendar-page {
-  padding: 1rem;
+  padding: 1.25rem;
   max-width: 1400px;
-  background: rgb(255, 249, 253);
+  background: rgba(255, 255, 255, 0.78);
   margin: 0 auto;
 }
 
@@ -26,7 +26,9 @@
 .calendar-embedded {
   width: min(1100px, 100%);
   margin: 0 auto 1.5rem;
-  border-radius: 12px;
+  border: 1px solid rgba(85, 155, 152, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(24, 59, 104, 0.07);
 }
 
 .calendar-header {
@@ -38,14 +40,15 @@
 
 .calendar-header button {
   padding: 0.5rem 1rem;
-  border: 1px solid #ed96ec;
-  border-radius: 4px;
-  background: rgb(226, 171, 237);
+  border: 1px solid rgba(85, 155, 152, 0.35);
+  border-radius: 999px;
+  background: rgba(163, 220, 218, 0.3);
+  color: #183b68;
   cursor: pointer;
 }
 
 .calendar-header button:hover {
-  background: hsl(305, 76%, 90%);
+  background: rgba(163, 220, 218, 0.55);
 }
 
 .weekday-row {
@@ -58,8 +61,9 @@
 
 .weekday-row div {
   padding: 0.5rem;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
+  background: rgba(163, 220, 218, 0.18);
+  border: 1px solid rgba(85, 155, 152, 0.2);
+  color: #183b68;
 }
 
 .calendar-grid {
@@ -69,7 +73,7 @@
 
 .calendar-page .day-cell {
   min-height: 120px;
-  border: 1px solid #b6b1d7;
+  border: 1px solid rgba(85, 155, 152, 0.2);
   padding: 8px;
   background: rgb(255, 255, 255);
   color: inherit;
@@ -82,8 +86,8 @@
 }
 
 .calendar-page .day-cell.selected {
-  background: #eff6ff;
-  box-shadow: inset 0 0 0 2px #2563eb;
+  background: rgba(163, 220, 218, 0.22);
+  box-shadow: inset 0 0 0 2px #559b98;
 }
 
 .calendar-page .day-cell.outside-trip {
@@ -107,9 +111,9 @@
 }
 
 .event-card {
-  background: #0d6efd;
+  background: #183b68;
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 4px;
   margin-bottom: 4px;
   font-size: 0.8rem;
@@ -117,7 +121,7 @@
 }
 
 .empty-text {
-  color: #bd85c0;
+  color: #8462ac;
   font-size: 0.8rem;
 }
 
@@ -142,8 +146,9 @@
 .calendar-export-button {
   min-height: 42px;
   padding: 0 1rem;
-  border: 1px solid #2563eb !important;
-  background: #2563eb !important;
+  border: 1px solid #183b68 !important;
+  border-radius: 999px !important;
+  background: #183b68 !important;
   color: white !important;
 }
 

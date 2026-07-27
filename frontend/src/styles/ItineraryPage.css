@@ -1,83 +1,142 @@
 .itinerary-page {
   min-height: 100vh;
-  padding: 2rem;
-  background: #f6f7f9;
-  color: #202124;
-  font-family: "Poppins", sans-serif;
+  padding: 0 2rem 4rem;
+  background:
+    radial-gradient(circle at 5% 4%, rgba(189, 160, 223, 0.2), transparent 25rem),
+    radial-gradient(circle at 95% 14%, rgba(163, 220, 218, 0.32), transparent 30rem),
+    var(--fairy-cream);
+  color: var(--fairy-ink);
+  font-family: "DM Sans", sans-serif;
+}
+
+.itinerary-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1100px, 100%);
+  margin: 0 auto 2.4rem;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid rgba(85, 155, 152, 0.2);
+}
+
+.itinerary-nav-note {
+  color: #78909c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.itinerary-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.itinerary-page .sign-out-button {
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .itinerary-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 260px) auto;
   align-items: end;
-  justify-content: space-between;
   gap: 1rem;
   width: min(1100px, 100%);
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 1.6rem;
 }
 
 .itinerary-header h1,
 .selected-trip-summary h2,
 .itinerary-list h2 {
   margin: 0;
-  color: #202124;
-  font-weight: 700;
-  letter-spacing: 0;
+  color: var(--fairy-navy);
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
 .itinerary-header h1 {
-  font-size: 2rem;
+  margin-top: 0.15rem;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1;
 }
 
 .itinerary-header p {
-  margin: 0.35rem 0 0;
-  color: #5f6368;
+  margin: 0.55rem 0 0;
+  color: #6f8794;
 }
 
 .trip-picker {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  min-width: 220px;
+  gap: 0.4rem;
 }
 
-.trip-picker label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #5f6368;
+.trip-picker label,
+.day-selector label {
+  color: var(--fairy-teal);
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.trip-picker select {
-  min-height: 42px;
-  border: 1px solid #d7dce2;
-  border-radius: 8px;
-  padding: 0 0.75rem;
-  background: white;
-  color: #202124;
-  font: inherit;
+.trip-picker select,
+.day-selector select {
+  min-height: 46px;
+  border: 1px solid rgba(85, 155, 152, 0.35);
+  border-radius: 12px;
+  padding: 0 2.2rem 0 0.85rem;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--fairy-navy);
+  box-shadow: 0 6px 18px rgba(24, 59, 104, 0.06);
 }
 
 .itinerary-page button {
-  border: 1px solid #d7dce2;
-  border-radius: 8px;
+  border: 1px solid rgba(85, 155, 152, 0.3);
+  border-radius: 10px;
   background: white;
-  color: #202124;
-  font: inherit;
-  font-weight: 600;
+  color: var(--fairy-navy);
+  font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .itinerary-page button:hover {
-  border-color: #9aa4b2;
-  background: #f8fafc;
+  transform: translateY(-1px);
+  border-color: var(--fairy-teal);
+  background: #f7fffe;
+}
+
+.itinerary-page .brand {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.itinerary-page .brand:hover {
+  transform: none;
+  border-color: transparent;
+  background: transparent;
 }
 
 .primary-action {
-  min-height: 42px;
-  padding: 0 1rem;
-  background: #2563eb !important;
-  border-color: #2563eb !important;
+  min-height: 46px;
+  padding: 0 1.2rem;
+  border-color: var(--fairy-navy) !important;
+  border-radius: 999px !important;
+  background: var(--fairy-navy) !important;
   color: white !important;
+  box-shadow: 0 8px 20px rgba(24, 59, 104, 0.16);
+}
+
+.primary-action:hover {
+  background: #102f58 !important;
+  box-shadow: 0 12px 25px rgba(24, 59, 104, 0.22);
 }
 
 .selected-trip-summary,
@@ -86,39 +145,41 @@
 .itinerary-list,
 .new-trip-panel,
 .new-event-panel,
-.trips-empty-state {
+.trips-empty-state,
+.error-message {
   width: min(1100px, 100%);
-  margin: 0 auto;
+  margin-right: auto;
+  margin-left: auto;
 }
 
-.new-trip-panel {
+.new-trip-panel,
+.new-event-panel,
+.trips-empty-state {
   margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  border: 1px solid #e1e5ea;
-  border-radius: 8px;
-  background: white;
+  padding: 1.5rem;
+  border: 1px solid rgba(85, 155, 152, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 16px 45px rgba(24, 59, 104, 0.08);
+  backdrop-filter: blur(10px);
 }
 
-.new-event-panel {
-  margin-bottom: 1.5rem;
-  padding: 1.25rem;
-  border: 1px solid #e1e5ea;
-  border-radius: 8px;
-  background: white;
-}
-
-.new-event-panel h2 {
+.new-event-panel h2,
+.new-trip-panel h2,
+.trips-empty-state h2 {
   margin: 0;
+  color: var(--fairy-navy);
+  font-family: "Playfair Display", Georgia, serif;
 }
 
 .new-event-panel > p {
   margin: 0.25rem 0 1rem;
-  color: #5f6368;
+  color: #6f8794;
 }
 
 .new-trip-panel h2,
 .trips-empty-state h2 {
-  margin: 0 0 1rem;
+  margin-bottom: 1rem;
 }
 
 .new-trip-form,
@@ -130,23 +191,32 @@
 .new-trip-form label,
 .new-event-form label {
   display: grid;
-  gap: 0.35rem;
-  color: #5f6368;
-  font-size: 0.9rem;
-  font-weight: 600;
+  gap: 0.4rem;
+  color: #607b89;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .new-trip-form input,
 .new-trip-form textarea,
 .new-event-form input,
-.new-event-form textarea,
-.day-selector select {
-  border: 1px solid #d7dce2;
-  border-radius: 8px;
-  padding: 0.7rem 0.75rem;
+.new-event-form textarea {
+  border: 1px solid rgba(85, 155, 152, 0.28);
+  border-radius: 11px;
+  padding: 0.75rem 0.85rem;
+  outline: none;
   background: white;
-  color: #202124;
-  font: inherit;
+  color: var(--fairy-ink);
+}
+
+.new-trip-form input:focus,
+.new-trip-form textarea:focus,
+.new-event-form input:focus,
+.new-event-form textarea:focus,
+.trip-picker select:focus,
+.day-selector select:focus {
+  border-color: var(--fairy-teal);
+  box-shadow: 0 0 0 3px rgba(163, 220, 218, 0.3);
 }
 
 .trip-date-fields {
@@ -171,12 +241,9 @@
   opacity: 0.65;
 }
 
-.trips-empty-state {
-  box-sizing: border-box;
-}
-
 .trips-empty-state p {
   margin: 0;
+  color: #6f8794;
 }
 
 .selected-trip-summary {
@@ -184,52 +251,57 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  margin-top: 2.2rem;
   margin-bottom: 1rem;
+  padding: 1.45rem 1.6rem;
+  border: 1px solid rgba(85, 155, 152, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(110deg, rgba(163, 220, 218, 0.24), rgba(255, 255, 255, 0.8) 52%, rgba(189, 160, 223, 0.15));
+}
+
+.selected-trip-summary h2 {
+  font-size: 1.9rem;
 }
 
 .selected-trip-summary p {
   margin: 0.35rem 0 0;
+  color: #617b89;
 }
 
 .view-toggle {
   display: flex;
   width: fit-content;
   margin-bottom: 1.5rem;
-  padding: 0.25rem;
-  border: 1px solid #d7dce2;
-  border-radius: 10px;
-  background: white;
+  padding: 0.3rem;
+  border: 1px solid rgba(85, 155, 152, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .view-toggle button {
-  min-height: 36px;
-  padding: 0 1rem;
+  min-height: 38px;
+  padding: 0 1.1rem;
   border: 0;
+  border-radius: 999px;
   background: transparent;
 }
 
 .view-toggle button.active {
-  background: #202124;
+  background: var(--fairy-navy);
   color: white;
+  box-shadow: 0 6px 15px rgba(24, 59, 104, 0.16);
 }
 
 .day-selector {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.8rem;
   margin-bottom: 1.5rem;
-  overflow-x: auto;
 }
 
-.day-button {
-  min-width: 76px;
-  min-height: 40px;
-  padding: 0 0.85rem;
-}
-
-.day-button.active {
-  background: #202124;
-  border-color: #202124;
-  color: white;
+.day-selector select {
+  margin: 0;
+  min-width: 220px;
 }
 
 .itinerary-list {
@@ -237,20 +309,35 @@
   gap: 0.9rem;
 }
 
+.itinerary-list h2 {
+  font-size: 1.65rem;
+}
+
 .itinerary-card {
+  position: relative;
   display: grid;
   grid-template-columns: 86px 1fr auto;
   gap: 1rem;
   align-items: start;
-  padding: 1rem;
-  border: 1px solid #e1e5ea;
-  border-radius: 8px;
-  background: white;
+  overflow: hidden;
+  padding: 1.2rem 1.25rem;
+  border: 1px solid rgba(85, 155, 152, 0.18);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 28px rgba(24, 59, 104, 0.06);
+}
+
+.itinerary-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(var(--fairy-mint), var(--fairy-lilac));
+  content: "";
 }
 
 .item-time {
-  font-weight: 700;
-  color: #2563eb;
+  color: var(--fairy-teal);
+  font-weight: 800;
 }
 
 .item-details {
@@ -267,22 +354,22 @@
 
 .item-title-row h3 {
   margin: 0;
+  color: var(--fairy-navy);
   font-size: 1.05rem;
-  color: #202124;
 }
 
 .item-title-row span {
   border-radius: 999px;
-  background: #e8f0fe;
-  color: #174ea6;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.8rem;
-  font-weight: 700;
+  background: rgba(189, 160, 223, 0.22);
+  color: #72549a;
+  padding: 0.22rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .item-details p {
   margin: 0;
-  color: #5f6368;
+  color: #69808e;
 }
 
 .item-actions {
@@ -296,26 +383,45 @@
 }
 
 .empty-state {
-  margin: 0;
-  padding: 1rem;
-  border: 1px dashed #c9d1dc;
-  border-radius: 8px;
-  background: white;
-  color: #5f6368;
+  margin-top: 0;
+  padding: 1.2rem;
+  border: 1px dashed rgba(85, 155, 152, 0.5);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  color: #6f8794;
+}
+
+.error-message {
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  background: #fff0f0;
+  color: #a3374c;
 }
 
 @media (max-width: 760px) {
   .itinerary-page {
-    padding: 1rem;
+    padding: 0 1rem 2rem;
+  }
+
+  .itinerary-nav {
+    margin-bottom: 1.5rem;
+  }
+
+  .itinerary-nav-note {
+    display: none;
+  }
+
+  .itinerary-nav-actions {
+    gap: 0;
   }
 
   .itinerary-header {
+    grid-template-columns: 1fr;
     align-items: stretch;
-    flex-direction: column;
   }
 
-  .trip-picker {
-    min-width: 0;
+  .itinerary-header .primary-action {
+    justify-self: start;
   }
 
   .itinerary-card {
@@ -326,10 +432,7 @@
     justify-content: start;
   }
 
-  .trip-date-fields {
-    grid-template-columns: 1fr;
-  }
-
+  .trip-date-fields,
   .event-time-fields {
     grid-template-columns: 1fr;
   }
@@ -337,5 +440,18 @@
   .selected-trip-summary {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .selected-trip-summary .primary-action {
+    align-self: start;
+  }
+
+  .day-selector {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .day-selector select {
+    width: 100%;
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   createTripEvent,
   createTrip,
@@ -7,6 +8,7 @@ import {
   type CalendarEvent,
   type Trip,
 } from "../api/trips";
+import { signOut } from "../api/auth";
 import CalendarDisplay from "./CalendarDisplay";
 
 /*
@@ -55,6 +57,7 @@ function parseDateOnly(date: string): Date {
   }
 
 function ItineraryPage() {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<number | null>(null);
   const [view, setView] = useState<"itinerary" | "calendar">("itinerary");
@@ -66,6 +69,7 @@ function ItineraryPage() {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
   const [tripName, setTripName] = useState("");
@@ -254,6 +258,20 @@ function ItineraryPage() {
     }
   }
 
+  async function handleSignOut() {
+    try {
+      setIsSigningOut(true);
+      setError("");
+      await signOut();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to sign out"
+      );
+      setIsSigningOut(false);
+    }
+  }
+
   if (isLoadingTrips) {
     return (
       <main className="itinerary-page">
@@ -264,10 +282,34 @@ function ItineraryPage() {
 
   return (
     <main className="itinerary-page">
+      <nav className="itinerary-nav">
+        <button
+          className="brand"
+          type="button"
+          aria-label="Back to ItineFairy home"
+          onClick={() => navigate("/")}
+        >
+          <span className="brand-mark" aria-hidden="true">✦</span>
+          <span>itineFairy</span>
+        </button>
+        <div className="itinerary-nav-actions">
+          <span className="itinerary-nav-note">Your travel workspace</span>
+          <button
+            className="sign-out-button"
+            type="button"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+          >
+            {isSigningOut ? "Signing out..." : "Sign out"}
+          </button>
+        </div>
+      </nav>
+
       <section className="itinerary-header">
         <div>
-          <h1>Itinerary</h1>
-          <p>Plan your trip day by day.</p>
+          <span className="section-kicker">✦ Trip planner</span>
+          <h1>Your itinerary</h1>
+          <p>Every detail, beautifully organized.</p>
         </div>
 
         {trips.length > 0 && (
