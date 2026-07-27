@@ -192,5 +192,6 @@ def reset_password():
 def signout():
     jti = get_jwt()["jti"]
     jwt_blocklist.add(jti)
+    print("Blocklist after signout:", jwt_blocklist)
 
     return jsonify({"success": True, "message": "Successfully signed out"}), 200
