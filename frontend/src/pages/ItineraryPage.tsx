@@ -7,6 +7,7 @@ import {
   type CalendarEvent,
   type Trip,
 } from "../api/trips";
+import CalendarDisplay from "./CalendarDisplay";
 
 /*
     These are date formatting helper function
@@ -56,6 +57,7 @@ function parseDateOnly(date: string): Date {
 function ItineraryPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<number | null>(null);
+  const [view, setView] = useState<"itinerary" | "calendar">("itinerary");
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -386,7 +388,28 @@ function ItineraryPage() {
         </section>
       )}
 
-      {selectedTrip && <section className="day-selector">
+      {selectedTrip && (
+        <div className="view-toggle" role="group" aria-label="Choose trip view">
+          <button
+            type="button"
+            className={view === "itinerary" ? "active" : ""}
+            aria-pressed={view === "itinerary"}
+            onClick={() => setView("itinerary")}
+          >
+            Itinerary
+          </button>
+          <button
+            type="button"
+            className={view === "calendar" ? "active" : ""}
+            aria-pressed={view === "calendar"}
+            onClick={() => setView("calendar")}
+          >
+            Calendar
+          </button>
+        </div>
+      )}
+
+      {selectedTrip && view === "itinerary" && <section className="day-selector">
         <label htmlFor="day-select">Select day</label>
 
         <select
@@ -472,7 +495,20 @@ function ItineraryPage() {
 
       {error && <p className="error-message">{error}</p>}
 
-      {selectedTrip && <section className="itinerary-list">
+      {selectedTrip && view === "calendar" && (
+        <CalendarDisplay
+          embedded
+          trips={trips}
+          selectedTripId={selectedTripId}
+          events={events}
+          loading={isLoadingEvents}
+          selectedDate={selectedDate}
+          onTripSelect={setSelectedTripId}
+          onDateSelect={setSelectedDate}
+        />
+      )}
+
+      {selectedTrip && view === "itinerary" && <section className="itinerary-list">
         <h2>
           {selectedDate
             ? formatDayLabel(
@@ -518,4 +554,3 @@ function ItineraryPage() {
 }
 
 export default ItineraryPage;
-

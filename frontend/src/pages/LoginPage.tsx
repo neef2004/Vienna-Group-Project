@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TextInput from "../components/ui/TextInput";
 import { useNavigate } from "react-router-dom";
 
@@ -56,6 +56,16 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate(); //this is a react-router-dom hook that allows us to redirect the user to another page
+
+  useEffect(() => {
+    const authMessage = sessionStorage.getItem("authMessage");
+
+    if (authMessage) {
+      setError(authMessage);
+      sessionStorage.removeItem("authMessage");
+    }
+  }, []);
+
   /*
   React.FormEvent is a custom type from react.
   <HTMLFormElement> is a generic type parameter that tells TypeScript

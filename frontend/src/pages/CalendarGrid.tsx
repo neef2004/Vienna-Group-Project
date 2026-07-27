@@ -1,17 +1,39 @@
-import { useState } from "react";
-
-interface Event {
-  id: number;
-  title: string;
-  startDateTime: string;
-}
+import { useEffect, useState } from "react";
+import type { CalendarEvent } from "../api/trips";
 
 interface Props {
-  events: Event[];
+  events: CalendarEvent[];
+  initialDate?: string;
+  selectedDate?: string | null;
+  minDate?: string;
+  maxDate?: string;
+  onDateSelect?: (date: string) => void;
 }
 
-export default function CalendarGrid({ events }: Props) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+function calendarMonth(date?: string): Date {
+  if (!date) {
+    return new Date();
+  }
+
+  const [year, month] = date.slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, 1);
+}
+
+export default function CalendarGrid({
+  events,
+  initialDate,
+  selectedDate,
+  minDate,
+  maxDate,
+  onDateSelect,
+}: Props) {
+  const [currentDate, setCurrentDate] = useState(() =>
+    calendarMonth(initialDate)
+  );
+
+  useEffect(() => {
+    setCurrentDate(calendarMonth(initialDate));
+  }, [initialDate]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -40,19 +62,30 @@ export default function CalendarGrid({ events }: Props) {
       2,
       "0"
     )}-${String(day).padStart(2, "0")}`;
+    const isOutsideTrip =
+      (minDate !== undefined && dateStr < minDate.slice(0, 10)) ||
+      (maxDate !== undefined && dateStr > maxDate.slice(0, 10));
 
     const dayEvents = events
       .filter((event) =>
-        event.startDateTime.startsWith(dateStr)
+        event.startTime.startsWith(dateStr)
       )
       .sort(
         (a, b) =>
-          new Date(a.startDateTime).getTime() -
-          new Date(b.startDateTime).getTime()
+          new Date(a.startTime).getTime() -
+          new Date(b.startTime).getTime()
       );
 
     cells.push(
-      <div key={day} className="day-cell">
+      <button
+        key={day}
+        type="button"
+        className={`day-cell${selectedDate === dateStr ? " selected" : ""}${
+          isOutsideTrip ? " outside-trip" : ""
+        }`}
+        disabled={isOutsideTrip}
+        onClick={() => onDateSelect?.(dateStr)}
+      >
         <div className="day-number">{day}</div>
 
         {dayEvents.length > 0 ? (
@@ -63,7 +96,7 @@ export default function CalendarGrid({ events }: Props) {
             >
               <small>
                 {new Date(
-                  event.startDateTime
+                  event.startTime
                 ).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -78,7 +111,7 @@ export default function CalendarGrid({ events }: Props) {
             No events
           </div>
         )}
-      </div>
+      </button>
     );
   }
 

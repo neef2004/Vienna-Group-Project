@@ -1,92 +1,230 @@
-import { useEffect, useState } from "react";
-import CalendarGrid from "../pages/CalendarGrid.tsx"
+import { useEffect, useMemo, useState } from "react";
+import {
+  exportTripCalendar,
+  getTripEvents,
+  getUserTrips,
+  type CalendarEvent,
+  type Trip,
+} from "../api/trips";
+import CalendarGrid from "./CalendarGrid";
 import "../styles/CalendarDisplay.css";
 
-interface Trip {
-  id: number;
-  name: string;
-}
+type CalendarDisplayProps = {
+  trips?: Trip[];
+  selectedTripId?: number | null;
+  events?: CalendarEvent[];
+  loading?: boolean;
+  error?: string;
+  embedded?: boolean;
+  selectedDate?: string | null;
+  onTripSelect?: (tripId: number) => void;
+  onDateSelect?: (date: string) => void;
+};
 
-interface TripEvent {
-  id: number;
-  title: string;
-  description?: string;
-  startDateTime: string;
-}
+export default function CalendarDisplay({
+  trips: suppliedTrips,
+  selectedTripId: suppliedSelectedTripId,
+  events: suppliedEvents,
+  loading: suppliedLoading,
+  error: suppliedError,
+  embedded = false,
+  selectedDate,
+  onTripSelect,
+  onDateSelect,
+}: CalendarDisplayProps) {
+  const [loadedTrips, setLoadedTrips] = useState<Trip[]>([]);
+  const [internalSelectedTripId, setInternalSelectedTripId] = useState<
+    number | null
+  >(null);
+  const [loadedEvents, setLoadedEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [exportError, setExportError] = useState("");
 
-export default function CalendarPage() {
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [selectedTrip, setSelectedTrip] = useState("");
-  const [events, setEvents] = useState<TripEvent[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const isControlled = suppliedTrips !== undefined;
+  const trips = suppliedTrips ?? loadedTrips;
+  const selectedTripId =
+    suppliedSelectedTripId !== undefined
+      ? suppliedSelectedTripId
+      : internalSelectedTripId;
+  const events = suppliedEvents ?? loadedEvents;
+  const loading = suppliedLoading ?? isLoading;
+  const error = suppliedError ?? loadError;
+
+  const selectedTrip = useMemo(
+    () => trips.find((trip) => trip.id === selectedTripId) ?? null,
+    [trips, selectedTripId]
+  );
 
   useEffect(() => {
+    if (isControlled) {
+      return;
+    }
+
+    let requestCancelled = false;
+
+    async function loadTrips() {
+      try {
+        setIsLoading(true);
+        setLoadError("");
+        const data = await getUserTrips();
+
+        if (!requestCancelled) {
+          setLoadedTrips(data);
+          setInternalSelectedTripId(data[0]?.id ?? null);
+        }
+      } catch (error) {
+        if (!requestCancelled) {
+          setLoadError(
+            error instanceof Error ? error.message : "Failed to load trips"
+          );
+        }
+      } finally {
+        if (!requestCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
     loadTrips();
-  }, []);
 
-  async function loadTrips() {
-    try {
-      setLoading(true);
+    return () => {
+      requestCancelled = true;
+    };
+  }, [isControlled]);
 
-      const response = await fetch("/api/trips");
-      const data = await response.json();
+  useEffect(() => {
+    if (isControlled || !selectedTrip) {
+      if (!isControlled) {
+        setLoadedEvents([]);
+      }
+      return;
+    }
 
-      setTrips(data);
-    } catch {
-      setError("Failed to load trips.");
-    } finally {
-      setLoading(false);
+    const trip = selectedTrip;
+    let requestCancelled = false;
+
+    async function loadEvents() {
+      try {
+        setIsLoading(true);
+        setLoadError("");
+        const data = await getTripEvents(trip);
+
+        if (!requestCancelled) {
+          setLoadedEvents(data);
+        }
+      } catch (error) {
+        if (!requestCancelled) {
+          setLoadedEvents([]);
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Failed to load trip events"
+          );
+        }
+      } finally {
+        if (!requestCancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadEvents();
+
+    return () => {
+      requestCancelled = true;
+    };
+  }, [isControlled, selectedTrip]);
+
+  function handleTripSelect(value: string) {
+    const tripId = Number(value);
+
+    if (onTripSelect) {
+      onTripSelect(tripId);
+    } else {
+      setInternalSelectedTripId(tripId);
     }
   }
 
-  async function handleTripSelect(tripId: string) {
-    setSelectedTrip(tripId);
+  async function handleExport() {
+    if (!selectedTrip) {
+      return;
+    }
 
     try {
-      setLoading(true);
+      setIsExporting(true);
+      setExportError("");
+      const { blob, filename } = await exportTripCalendar(selectedTrip);
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-      const response = await fetch(`/api/trips/${tripId}/events`);
-      const data = await response.json();
-
-      data.sort(
-        (a: TripEvent, b: TripEvent) =>
-          new Date(a.startDateTime).getTime() -
-          new Date(b.startDateTime).getTime()
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "Failed to export calendar"
       );
-
-      setEvents(data);
-    } catch {
-      setError("Failed to load events.");
     } finally {
-      setLoading(false);
+      setIsExporting(false);
     }
   }
 
   return (
-    <div className="calendar-page">
-      <h1>ItineFairy Trip Planner</h1>
+    <section className={`calendar-page${embedded ? " calendar-embedded" : ""}`}>
+      {!embedded && <h1>Trip calendar</h1>}
 
-      <select
-        value={selectedTrip}
-        onChange={(e) => handleTripSelect(e.target.value)}
-      >
-        <option value="">Select a trip</option>
-
-        {trips.map((trip) => (
-          <option key={trip.id} value={trip.id}>
-            {trip.name}
-          </option>
-        ))}
-      </select>
-
-      {loading && <p>Loading...</p>}
-
-      {error && <p>{error}</p>}
-
-      {!loading && (
-        <CalendarGrid events={events} />
+      {!embedded && trips.length > 0 && (
+        <label className="calendar-trip-picker">
+          Select trip
+          <select
+            value={selectedTripId ?? ""}
+            onChange={(event) => handleTripSelect(event.target.value)}
+          >
+            {trips.map((trip) => (
+              <option key={trip.id} value={trip.id}>
+                {trip.name}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
-    </div>
+
+      {loading && <p className="loading-state">Loading calendar...</p>}
+      {error && <p className="error-state">{error}</p>}
+
+      {!loading && !error && trips.length === 0 && (
+        <p className="empty-state">Create a trip to view its calendar.</p>
+      )}
+
+      {!loading && selectedTrip && (
+        <>
+          <CalendarGrid
+            events={events}
+            initialDate={selectedTrip.startDate}
+            selectedDate={selectedDate}
+            minDate={selectedTrip.startDate}
+            maxDate={selectedTrip.endDate}
+            onDateSelect={onDateSelect}
+          />
+
+          <div className="calendar-export">
+            <button
+              type="button"
+              className="calendar-export-button"
+              disabled={isExporting}
+              onClick={handleExport}
+            >
+              {isExporting ? "Exporting..." : "Export calendar (.ics)"}
+            </button>
+            {exportError && <p className="error-state">{exportError}</p>}
+          </div>
+        </>
+      )}
+    </section>
   );
 }

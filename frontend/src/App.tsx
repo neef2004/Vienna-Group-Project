@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import CalendarDisplay from "./pages/CalendarDisplay.tsx";
+import ItineraryPage from "./pages/ItineraryPage.tsx";
 //import DashboardPage from './pages/DashboardPage';
 //import NotFoundPage from './pages/NotFoundPage';
 
@@ -25,7 +25,6 @@ function App() {
         <Route path="/itinerary" element={<ItineraryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/calendar" element={<CalendarDisplay />} />
       </Routes>
     </BrowserRouter>
   );

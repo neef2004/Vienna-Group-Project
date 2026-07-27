@@ -59,13 +59,36 @@ type BackendTrip = {
   };
 
   //reusable auth function
-    function getAuthToken(): string {
+  function getAuthToken(): string {
     const token = localStorage.getItem("token");
 
     if(!token) {
         throw new Error("You must be logged in");
     }
     return token;
+  }
+
+  async function authenticatedFetch(
+    input: RequestInfo | URL,
+    init: RequestInit = {}
+  ): Promise<Response> {
+    const headers = new Headers(init.headers);
+    headers.set("Authorization", `Bearer ${getAuthToken()}`);
+
+    const response = await fetch(input, { ...init, headers });
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.setItem(
+        "authMessage",
+        "Your session expired. Please log in again."
+      );
+      window.location.replace("/login");
+      throw new Error("Your session expired. Please log in again.");
+    }
+
+    return response;
   }
 
   //maps backend trip response to frontend trip type
@@ -109,11 +132,7 @@ type BackendTrip = {
 
   //makes the api call to get the user's planned trips
   export async function getUserTrips() : Promise<Trip[]> {
-    const response = await fetch("/api/trips", {
-        headers: {
-            Authorization: `Bearer ${getAuthToken()}`
-        }
-    });
+    const response = await authenticatedFetch("/api/trips");
 
     if (!response.ok) {
         throw new Error("failed to load trips");
@@ -125,11 +144,10 @@ type BackendTrip = {
   }
 
   export async function createTrip(input: CreateTripInput): Promise<Trip> {
-    const response = await fetch("/api/trips", {
+    const response = await authenticatedFetch("/api/trips", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAuthToken()}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         name: input.name,
@@ -160,13 +178,9 @@ type BackendTrip = {
         start: `${startDate}T00:00:00`,
         end: `${endDate}T00:00:00`
     });
-    const response = await fetch(
+    const response = await authenticatedFetch(
         `/api/trips/${trip.id}/events?${query.toString()}`,
-        {
-            headers: {
-                Authorization: `Bearer ${getAuthToken()}`
-            }    
-        }
+        {}
     );
 
     if(!response.ok) {
@@ -182,11 +196,10 @@ type BackendTrip = {
     tripId: number,
     input: CreateEventInput
   ): Promise<CalendarEvent> {
-    const response = await fetch(`/api/trips/${tripId}/events`, {
+    const response = await authenticatedFetch(`/api/trips/${tripId}/events`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAuthToken()}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         title: input.title,
@@ -204,4 +217,26 @@ type BackendTrip = {
 
     const data: BackendCalendarEvent = await response.json();
     return mapCalendarEvent(data);
+  }
+
+  export async function exportTripCalendar(
+    trip: Trip
+  ): Promise<{ blob: Blob; filename: string }> {
+    const response = await authenticatedFetch(
+      `/api/trips/${trip.id}/calendar.ics`
+    );
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error ?? "Failed to export calendar");
+    }
+
+    const disposition = response.headers.get("Content-Disposition");
+    const headerFilename = disposition?.match(/filename="?([^"]+)"?/i)?.[1];
+    const fallbackName = `${trip.name.replace(/[^\w -]/g, "").trim() || "trip"}.ics`;
+
+    return {
+      blob: await response.blob(),
+      filename: headerFilename ?? fallbackName,
+    };
   }

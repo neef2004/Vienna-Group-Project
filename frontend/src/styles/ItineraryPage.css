@@ -81,6 +81,7 @@
 }
 
 .selected-trip-summary,
+.view-toggle,
 .day-selector,
 .itinerary-list,
 .new-trip-panel,
@@ -188,6 +189,28 @@
 
 .selected-trip-summary p {
   margin: 0.35rem 0 0;
+}
+
+.view-toggle {
+  display: flex;
+  width: fit-content;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem;
+  border: 1px solid #d7dce2;
+  border-radius: 10px;
+  background: white;
+}
+
+.view-toggle button {
+  min-height: 36px;
+  padding: 0 1rem;
+  border: 0;
+  background: transparent;
+}
+
+.view-toggle button.active {
+  background: #202124;
+  color: white;
 }
 
 .day-selector {
