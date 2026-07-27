@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 
 from app.models.user import create_user, get_user_by_email, verify_password
 from app.utils.validators import is_valid_email, is_valid_password
+
+# setup for revoked tokens. Used for signout
+jwt_blocklist = set()  
 
 # auth routes
 auth_bp = Blueprint("auth", __name__)
@@ -102,7 +105,6 @@ def signup():
 # return {"success":true, "reset_token": <token>, "message":...} (200) if email exists,
 #        {"success":true, "message":"If email exists, reset link sent"} (200) if it doesn't,
 #        400 if bad/missing json or no email
-#were not using ts
 @auth_bp.route("/forgot-password", methods=['POST'])
 # Start a password reset: create a reset token for a known email.
 # Always reports success so outsiders can't discover which emails are registered.
@@ -178,3 +180,17 @@ def reset_password():
     mark_reset_token_used(token) # burn the token so it can't be reused
     
     return jsonify({"success": True, "message": "Password reset successful"}), 200
+
+# POST /signout, revoke the current JWT so it can no longer be used.
+# method: POST
+# header: Authorization: Bearer <jwt>
+# return {"success":true, "message":"Successfully signed out"} (200),
+#        401 if missing/invalid/expired token
+@auth_bp.route("/signout", methods=['POST'])
+@jwt_required()
+# Revoke the current access token by adding its jti to the blocklist.
+def signout():
+    jti = get_jwt()["jti"]
+    jwt_blocklist.add(jti)
+
+    return jsonify({"success": True, "message": "Successfully signed out"}), 200
