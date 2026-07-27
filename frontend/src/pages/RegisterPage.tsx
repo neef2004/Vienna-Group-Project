@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TextInput from "../components/ui/TextInput";
+import { useNavigate } from "react-router-dom";
 
 async function registerUser(
   email: string,
@@ -35,6 +36,8 @@ function RegisterPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -43,6 +46,7 @@ function RegisterPage() {
 
     try {
       await registerUser(email, password, confirm_password);
+      navigate("/login");
     } catch (error) {
       setError(
         error instanceof Error
