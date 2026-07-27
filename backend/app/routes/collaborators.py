@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from functools import wraps
+import sqlite3
 
 from app.models.trip import (
     get_trip_by_id,
@@ -16,21 +18,27 @@ from app.models.user import get_user_by_email
 collaborators_bp = Blueprint('collaborators', __name__, url_prefix='/api/trips')
 
 # login check for every route below.
-# header: X-User-ID (int), required
 def require_auth(f):
     @wraps(f) # keep the wrapped route's name/info intact
     def decorated_function(*args, **kwargs):
-        user_id = request.headers.get('X-User-ID')
+        verify_jwt_in_request()
+        user_id = get_jwt_identity()
         if not user_id:
-            # no header means not logged in
+            # no valid token means not logged in
             return jsonify({'error': 'Unauthorized'}), 401
-        # convert to int and hand user_id to the route
-        return f(*args, user_id=int(user_id), **kwargs)
+
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return jsonify({'error': 'Invalid token identity'}), 401
+
+        # hand user_id to the route
+        return f(*args, user_id=user_id, **kwargs)
     return decorated_function
 
 # GET /api/trips/<trip_id(int, required)>/collaborators, list everyone shared on a trip.
 # method: GET
-# header: X-User-ID (int)
+# header: Authorization: Bearer <jwt>
 # body: none
 # return list of collaborators (200), 404 if no trip, 500 if error
 @collaborators_bp.route('/<int:trip_id>/collaborators', methods=['GET'])
@@ -53,7 +61,7 @@ def get_collaborators(trip_id, user_id):
 
 # POST /api/trips/<trip_id(int, required)>/collaborators, invite a user to a trip by email. (owner only)
 # method: POST
-# header: X-User-ID (int)
+# header: Authorization: Bearer <jwt>
 # Content-Type: application/json
 # body(json): email(str, required), permission_level(str, default "editor" -> "viewer"/"editor")
 # return {"message":"Invitation sent"} (201), 400 if no email, 403 if not owner,
@@ -69,8 +77,11 @@ def invite_collaborator(trip_id, user_id):
         if not trip or trip['user_id'] != user_id:
             return jsonify({'error': 'Only trip owner can invite'}), 403
         
-        data = request.get_json()
+        data = request.get_json(silent=True)
         
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
+
         if not data.get('email'):
             # email is the only required field
             return jsonify({'error': 'Email is required'}), 400
@@ -85,7 +96,11 @@ def invite_collaborator(trip_id, user_id):
         # default new collaborators to 'editor' if no level was given
         permission_level = data.get('permission_level', 'editor')
         
-        add_trip_collaborator(trip_id, collaborator['id'], permission_level)
+        try:
+            add_trip_collaborator(trip_id, collaborator['id'], permission_level)
+        except sqlite3.IntegrityError:
+            # this user is already a collaborator on this trip
+            return jsonify({'error': 'User is already a collaborator on this trip'}), 409
         
         return jsonify({'message': 'Invitation sent'}), 201
     except Exception as e:
@@ -93,7 +108,7 @@ def invite_collaborator(trip_id, user_id):
 
 # PUT /api/trips/<trip_id(int, required)>/collaborators/<collab_user_id(int, required)>, change a collaborator's permission. (owner only)
 # method: PUT
-# header: X-User-ID (int)
+# header: Authorization: Bearer <jwt>
 # Content-Type: application/json
 # body(json): permission_level(str, required -> "viewer"/"editor")
 # return {"message":"Permission updated"} (200), 400 if bad permission, 403 if not owner, 500 if error
@@ -108,8 +123,11 @@ def update_collaborator_perm(trip_id, collab_user_id, user_id):
         if not trip or trip['user_id'] != user_id:
             return jsonify({'error': 'Only trip owner can update permissions'}), 403
         
-        data = request.get_json()
+        data = request.get_json(silent=True)
         
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
+
         new_permission = data.get('permission_level')
         
         # only these two levels are allowed; reject anything else
@@ -124,7 +142,7 @@ def update_collaborator_perm(trip_id, collab_user_id, user_id):
 
 # DELETE /api/trips/<trip_id(int, required)>/collaborators/<collab_user_id(int, required)>, remove a collaborator from a trip. (owner only)
 # method: DELETE
-# header: X-User-ID (int)
+# header: Authorization: Bearer <jwt>
 # body: none
 # return {"message":"Collaborator removed"} (200), 403 if not owner, 500 if error
 @collaborators_bp.route('/<int:trip_id>/collaborators/<int:collab_user_id>', methods=['DELETE'])
@@ -146,7 +164,7 @@ def remove_collaborator(trip_id, collab_user_id, user_id):
 
 # PUT /api/trips/<trip_id(int, required)>/accept-invitation, the invited user accepts their invite. (called by the invitee)
 # method: PUT
-# header: X-User-ID (int)
+# header: Authorization: Bearer <jwt>
 # body: none
 # return {"message":"Invitation accepted"} (200), 404 if no invitation for this user, 500 if error
 @collaborators_bp.route('/<int:trip_id>/accept-invitation', methods=['PUT'])

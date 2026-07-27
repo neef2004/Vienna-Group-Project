@@ -6,21 +6,23 @@ EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 def is_valid_email(email: str) -> bool:
     return bool(EMAIL_REGEX.match(email))
 
-
+# collects ALL failures instead of stopping at the first one
 def is_valid_password(password: str):
+    errors = []
+
     if len(password) < 8:
-        return False, "Password must be at least 8 characters long"
+        errors.append("Password must be at least 8 characters long")
 
     if not re.search(r"[A-Z]", password):
-        return False, "Password must contain at least one uppercase letter"
+        errors.append("Password must contain at least one uppercase letter")
 
     if not re.search(r"[a-z]", password):
-        return False, "Password must contain at least one lowercase letter"
+        errors.append("Password must contain at least one lowercase letter")
 
     if not re.search(r"\d", password):
-        return False, "Password must contain at least one digit"
+        errors.append("Password must contain at least one digit")
 
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+=]", password):
-        return False, "Password must contain at least one special character"
+        errors.append("Password must contain at least one special character")
 
-    return True, None
+    return (len(errors) == 0, errors)
