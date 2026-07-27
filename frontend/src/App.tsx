@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from './pages/LoginPage';
@@ -17,7 +17,9 @@ import CalendarDisplay from "./pages/CalendarDisplay.tsx";
 
 function App() {
   return (
-    <BrowserRouter> {/*routes to different pages based on path in the url*/}
+    <BrowserRouter>
+      {" "}
+      {/*routes to different pages based on path in the url*/}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

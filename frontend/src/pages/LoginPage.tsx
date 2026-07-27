@@ -92,7 +92,7 @@ function LoginPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
       <h1>Welcome Back!</h1>
       <form onSubmit={handleSubmit}>
         {/*text input for email*/}

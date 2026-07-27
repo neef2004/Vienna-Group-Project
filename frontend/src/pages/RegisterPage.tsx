@@ -42,7 +42,7 @@ function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const result = await registerUser(email, password, confirm_password);
+      await registerUser(email, password, confirm_password);
     } catch (error) {
       setError(
         error instanceof Error
@@ -55,7 +55,7 @@ function RegisterPage() {
   }
 
   return (
-    <main>
+    <main className="auth-page">
       <h1>Register</h1>
       <form onSubmit={handleSubmit}>
         <TextInput
