@@ -22,6 +22,7 @@ function App() {
       {/*routes to different pages based on path in the url*/}
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/itinerary" element={<ItineraryPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/calendar" element={<CalendarDisplay />} />

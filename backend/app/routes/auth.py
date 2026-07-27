@@ -1,148 +1,180 @@
-# auth.py
-# Defines the authentication endpoints for the app: signup and login.
-# This file handles HTTP request/response logic ONLY — it does not talk
-# to the database directly. All database work is delegated to functions
-# imported from app.models.user, and validation rules live in
-# app.utils.validators. Keeping these separated makes each file easier
-# to test and reason about on its own.
-
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 
-# These three functions are the only way this file touches the database.
-# create_user()        -> inserts a new row into the users table
-# get_user_by_email()  -> fetches a single user row, or None if not found
-# verify_password()    -> compares a plaintext attempt against the stored hash
 from app.models.user import create_user, get_user_by_email, verify_password
-
-# These two functions check that submitted data meets our rules
-# (valid email format, strong enough password) before we touch the database.
 from app.utils.validators import is_valid_email, is_valid_password
 
-
-# A Blueprint groups related routes together so they can be registered
-# on the main Flask app as a single unit. "auth" is just a name Flask
-# uses internally to refer to this group of routes.
+# auth routes
 auth_bp = Blueprint("auth", __name__)
 
-
+# POST /login, check email & password, give back a login token.
+# method: POST
+# header: Content-Type: application/json
+# body(json): email(str, required), password(str, required)
+# return {"success":true, "user":{email}, "token": <jwt>} (200),
+#        400 if bad/missing json or missing fields, 401 if wrong login
 @auth_bp.route("/login", methods=['POST'])
+# Authenticate a user by looking them up by email, checking the password, return a JWT.
 def login():
-    """
-    POST /api/login
-    Expects JSON body: { "email": "...", "password": "..." }
-
-    On success: returns a JWT access token the frontend can use to
-    authenticate future requests.
-    On failure: returns a generic "Invalid Login" error (we don't say
-    whether the email or the password specifically was wrong, since
-    that would help an attacker guess which emails are registered).
-    """
-
-    # get_json(silent=True) parses the incoming JSON body.
-    # silent=True means: if the body is missing or malformed,
-    # return None instead of throwing an exception and crashing the server.
     data = request.get_json(silent=True)
 
     if not data:
-        # No JSON body at all, or it wasn't valid JSON.
-        # 400 = Bad Request: the client sent something we can't process.
+        # body was missing or not valid JSON
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
 
-    # .get(key, default) avoids a KeyError if the field is missing.
-    # We also normalize the email: strip() removes accidental
-    # leading/trailing whitespace, lower() ensures "User@Mail.com"
-    # and "user@mail.com" are treated as the same account.
+    # normalize email (trim spaces, lowercase) so lookups are consistent
+    # password must be provided as-is (case-sensitive)
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
 
     if not email or not password:
-        # Either field was empty/missing after extraction.
+        # both fields must be present and non-empty
         return jsonify({"success": False, "error": "Email and password are required"}), 400
 
-    # Look the user up in the database. Returns None if no match.
     user = get_user_by_email(email)
 
-    # Combined check: either the user doesn't exist, OR the password
-    # doesn't match. We deliberately use ONE error message for both
-    # cases (see docstring above) — this is a security best practice
-    # to avoid leaking which emails are registered.
+    # same error whether the email is unknown OR the password is wrong,
+    # so an attacker can't tell which emails exist
     if user is None or not verify_password(user, password):
-        # 401 = Unauthorized: credentials are invalid.
         return jsonify({"success": False, "error": "Invalid Login"}), 401
 
-    # At this point, the user is verified. Create a signed JWT containing
-    # their user ID as the "identity" claim. str() is used because
-    # flask_jwt_extended expects identity to be a string, not a raw int.
+    # identity must be a string for the JWT; store the user id inside the token
     token = create_access_token(identity=str(user["id"]))
 
-    # 200 = OK: everything succeeded. Send back the token and basic
-    # (non-sensitive) user info. NEVER send back the password_hash.
     return jsonify({
         "success": True,
-        "user": {"email": user["email"]},
+        "user": {"id": user["id"], "email": user["email"]},
         "token": token
     }), 200
 
-
-@auth_bp.route("/signup", methods=['POST'])
+# POST /signup, make a new account. (also known as /register)
+# method: POST
+# header: Content-Type: application/json
+# body(json): email(str, required), password(str, required), confirm_password(str, required)
+# return {"success":true, "user":{email}} (201),
+#        400 if missing fields / passwords don't match / bad email / weak password,
+#        409 if email already registered
+@auth_bp.route("/signup", methods=['POST']) # /register 
+# Register a new account after validating email format, password strength, and uniqueness.
 def signup():
-    """
-    POST /api/signup
-    Expects JSON body:
-    {
-        "email": "...",
-        "password": "...",
-        "confirm_password": "..."
-    }
-
-    Creates a new user account if all validation passes.
-    """
-
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
 
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
-    confirm_password = data.get("confirm_password", "")
+    confirm_password = data.get("confirm_password", "") # second entry to catch typos
 
-    # Step 1: Make sure nothing required is missing.
     if not email or not password or not confirm_password:
+        # the two password entries must match
         return jsonify({
             "success": False,
             "error": "Email, password, and confirm password are required"
         }), 400
 
-    # Step 2: Make sure the two password fields match.
-    # This check should ALSO happen on the frontend for instant feedback,
-    # but we never trust the frontend alone — always re-check on the backend.
     if password != confirm_password:
+        # the two password entries must match
         return jsonify({"success": False, "error": "Passwords do not match"}), 400
 
-    # Step 3: Validate email format (e.g. must contain "@" and a domain).
     if not is_valid_email(email):
+        # reject bad email shape before touching the db
         return jsonify({"success": False, "error": "Invalid email format"}), 400
 
-    # Step 4: Validate password strength (length, uppercase, lowercase,
-    # digit, special character — see validators.py for exact rules).
-    # is_valid_password returns a tuple: (True/False, error message or None)
+    # is_valid_password returns (bool, message); msg explains why it failed
     valid, msg = is_valid_password(password)
     if not valid:
         return jsonify({"success": False, "error": msg}), 400
 
-    # Step 5: Check for an existing account with this email.
-    # This is a friendly early check — the real safety net is the
-    # UNIQUE constraint on the email column in the database itself,
-    # which prevents duplicates even under race conditions.
     if get_user_by_email(email):
-        # 409 = Conflict: the resource (this email) already exists.
+        # email already taken -> 409 conflict
         return jsonify({"success": False, "error": "Email is already registered"}), 409
 
-    # Step 6: All checks passed — create the user.
-    # create_user() handles hashing the password internally;
-    # this file never sees or stores the raw password beyond this point.
-    create_user(email, password)
+    create_user(email, password) # model handles hashing the password
 
-    # 201 = Created: a new resource (the user account) was successfully made.
-    return jsonify({"success": True, "user": {"email": email}}), 201
+    user = get_user_by_email(email)
+
+    return jsonify({"success": True, "user": {"id": user["id"], "email": email}}), 201
+
+# POST /forgot-password, start a password reset. always says ok even if email is unknown (so no one can guess which emails exist).
+# method: POST
+# header: Content-Type: application/json
+# body(json): email(str, required)
+# return {"success":true, "reset_token": <token>, "message":...} (200) if email exists,
+#        {"success":true, "message":"If email exists, reset link sent"} (200) if it doesn't,
+#        400 if bad/missing json or no email
+#were not using ts
+@auth_bp.route("/forgot-password", methods=['POST'])
+# Start a password reset: create a reset token for a known email.
+# Always reports success so outsiders can't discover which emails are registered.
+def forgot_password():
+    data = request.get_json(silent=True)
+    
+    if not data:
+        return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
+    
+    email = data.get("email", "").strip().lower()
+    
+    if not email:
+        return jsonify({"success": False, "error": "Email is required"}), 400
+    
+    user = get_user_by_email(email)
+    
+    if not user:
+        # unknown email will return the SAME success message, but do NOT create a token
+        return jsonify({"success": True, "message": "If email exists, reset link sent"}), 200
+    
+    # imported here (not at top) to avoid a circular import with app.models.user
+    from app.models.user import create_password_reset_token
+    token = create_password_reset_token(user['id'])
+    
+    return jsonify({
+        "success": True,
+        "reset_token": token,
+        "message": "Password reset token created"
+    }), 200
+
+# POST /reset-password, set a new password using the token from /forgot-password.
+# method: POST
+# header: Content-Type: application/json
+# body(json): token(str, required), new_password(str, required), confirm_password(str, required)
+# return {"success":true, "message":"Password reset successful"} (200),
+#        400 if missing fields / passwords don't match / invalid or expired token / weak password
+@auth_bp.route("/reset-password", methods=['POST'])
+# Finish a password reset: validate the token + new password, then update it.
+def reset_password():
+    data = request.get_json(silent=True)
+    
+    if not data:
+        return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
+    
+    token = data.get("token") # the token issued by forgot_password
+    new_password = data.get("new_password")
+    confirm_password = data.get("confirm_password")
+    
+    if not token or not new_password or not confirm_password:
+        # all three required
+        return jsonify({"success": False, "error": "Token and passwords are required"}), 400
+    
+    if new_password != confirm_password:
+        # the two new-password entries must match
+        return jsonify({"success": False, "error": "Passwords do not match"}), 400
+    
+    # imported here to avoid circular imports
+    from app.models.user import get_password_reset_token, update_password, mark_reset_token_used
+    
+    reset_token = get_password_reset_token(token)
+    
+    if not reset_token:
+        # token doesn't exist, already used, or expired
+        return jsonify({"success": False, "error": "Invalid or expired token"}), 400
+    
+    # check strength only after the token is confirmed valid
+    valid, msg = is_valid_password(new_password)
+    if not valid:
+        return jsonify({"success": False, "error": msg}), 400
+    
+    # reset_token['user_id'] tells us whose password to change
+    update_password(reset_token['user_id'], new_password)
+    mark_reset_token_used(token) # burn the token so it can't be reused
+    
+    return jsonify({"success": True, "message": "Password reset successful"}), 200

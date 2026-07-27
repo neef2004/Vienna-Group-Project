@@ -1,201 +1,263 @@
-import { useState } from "react";
-import "./ItineraryPage.css";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createTripEvent,
+  createTrip,
+  getTripEvents,
+  getUserTrips,
+  type CalendarEvent,
+  type Trip,
+} from "../api/trips";
 
 /*
-  This type describes a trip option in the dropdown.
-
-  We only have one fake trip right now, but using an array still makes sense
-  because the backend will probably return a list of trips later.
+    These are date formatting helper function
 */
-type TripOption = {
-  id: number;
-  name: string;
-};
-
-/*
-  This type describes one itinerary item.
-
-  Each itinerary item has a tripId so that later, when there are multiple
-  trips from the backend, we can show only the items for the selected trip.
-*/
-type ItineraryItem = {
-  id: number;
-  tripId: number;
-  dayNumber: number;
-  time: string;
-  title: string;
-  category: string;
-  location: string;
-  durationMinutes: number;
-  notes: string;
-};
-
-/*
-  Fake trip dropdown data.
-
-  Later this could be replaced with a backend call such as:
-  GET /api/trips
-*/
-const fakeTripOptions: TripOption[] = [
-  {
-    id: 1,
-    name: "Vienna Trip",
-  },
-];
-
-/*
-  Fake itinerary items.
-
-  Later this could be replaced with a backend call such as:
-  GET /api/trips/:tripId/itinerary
-*/
-const fakeItineraryItems: ItineraryItem[] = [
-  {
-    id: 1,
-    tripId: 1,
-    dayNumber: 1,
-    time: "09:00",
-    title: "Breakfast near Stephansplatz",
-    category: "Food",
-    location: "Stephansplatz, Vienna",
-    durationMinutes: 60,
-    notes: "Start the day with coffee and pastries.",
-  },
-  {
-    id: 2,
-    tripId: 1,
-    dayNumber: 1,
-    time: "10:30",
-    title: "Visit St. Stephen's Cathedral",
-    category: "Sightseeing",
-    location: "Stephansplatz 3, Vienna",
-    durationMinutes: 90,
-    notes: "Walk around the cathedral and nearby streets.",
-  },
-  {
-    id: 3,
-    tripId: 1,
-    dayNumber: 2,
-    time: "11:00",
-    title: "Schonbrunn Palace",
-    category: "Activity",
-    location: "Schonbrunner Schlosstrasse 47, Vienna",
-    durationMinutes: 180,
-    notes: "Leave extra time for the gardens.",
-  },
-];
-
-function ItineraryPage() {
-  /*
-    selectedTripId stores which trip is selected in the dropdown.
-
-    fakeTripOptions[0].id means:
-    "Use the id of the first fake trip as the starting value."
-  */
-  const [selectedTripId, setSelectedTripId] = useState(fakeTripOptions[0].id);
-
-  /*
-    selectedDay stores which itinerary day the user is viewing.
-
-    This is separate from selectedTripId because choosing a trip and choosing
-    a day are two different pieces of page state.
-  */
-  const [selectedDay, setSelectedDay] = useState(1);
-
-  /*
-    We only have one fake trip right now, but find() keeps the code shaped
-    like it will be when the backend gives us multiple trips.
-
-    find() returns the first trip where trip.id matches selectedTripId.
-  */
-  const selectedTrip = fakeTripOptions.find(
-    (trip) => trip.id === selectedTripId
-  );
-
-  /*
-    This is a temporary hardcoded number of days.
-
-    Later, the backend may provide trip dates or a totalDays field.
-    Then we can calculate or load this instead of hardcoding 5.
-  */
-  const totalTripDays = 5;
-
-  /*
-    Array.from creates a new array.
-
-    { length: totalTripDays } tells it how many items to make.
-
-    The second argument is a function that decides what each item should be.
-    index starts at 0, so index + 1 gives us:
-    [1, 2, 3, 4, 5]
-  */
-  const tripDays = Array.from(
-    { length: totalTripDays },
-    (_, index) => index + 1
-  );
-
-  /*
-    If selectedTrip is missing, show a simple fallback.
-
-    This should not happen with our fake data, but TypeScript knows that
-    find() can return undefined, so this keeps the component safe.
-  */
-  if (!selectedTrip) {
-    return (
-      <main className="itinerary-page">
-        <h1>Itinerary</h1>
-        <p>Trip not found.</p>
-      </main>
-    );
+function parseDateOnly(date: string): Date {
+    const [year, month, day] = date.slice(0, 10).split("-").map(Number);
+  
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+  
+  function formatDateOnly(date: Date): string {
+    return date.toISOString().slice(0, 10);
+  }
+  
+  //gets the trip days based on the trip start and end time
+  function getTripDays(startDate: string, endDate: string): string[] {
+    const days: string[] = [];
+    const current = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+  
+    while (current <= end) {
+      days.push(formatDateOnly(current));
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+  
+    return days;
   }
 
-  /*
-    This filters itinerary items to show only items for:
-    - the currently selected trip
-    - the currently selected day
-  */
-  const itemsForSelectedTripAndDay = fakeItineraryItems.filter(
-    (item) =>
-      item.tripId === selectedTripId && item.dayNumber === selectedDay
+  //more date and time formatting
+  function formatDayLabel(date: string, index: number): string {
+    const formattedDate = parseDateOnly(date).toLocaleDateString(undefined, {
+      timeZone: "UTC",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  
+    return `Day ${index + 1} — ${formattedDate}`;
+  }
+  
+  function formatTime(dateTime: string): string {
+    const time = dateTime.match(/T(\d{2}):(\d{2})/);
+  
+    return time ? `${time[1]}:${time[2]}` : dateTime;
+  }
+
+function ItineraryPage() {
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<number | null>(null);
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const [isLoadingTrips, setIsLoadingTrips] = useState(true);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [showTripForm, setShowTripForm] = useState(false);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [tripName, setTripName] = useState("");
+  const [tripDescription, setTripDescription] = useState("");
+  const [tripStartDate, setTripStartDate] = useState("");
+  const [tripEndDate, setTripEndDate] = useState("");
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [eventTimezone, setEventTimezone] = useState("Europe/Vienna");
+  const [error, setError] = useState("");
+
+  const selectedTrip = useMemo(
+    () => trips.find((trip) => trip.id === selectedTripId) ?? null,
+    [trips, selectedTripId]
   );
 
-  /*
-    This sorts the selected items by time.
+  const tripDays = useMemo(() => {
+    if (!selectedTrip) {
+      return [];
+    }
 
-    We copy the array first with [...itemsForSelectedTripAndDay] because
-    sort() changes the array it is called on.
+    return getTripDays(selectedTrip.startDate, selectedTrip.endDate);
+  }, [selectedTrip]);
 
-    localeCompare compares strings. Since our times are formatted like
-    "09:00" and "14:30", string sorting works correctly.
-  */
-  const sortedItems = [...itemsForSelectedTripAndDay].sort((a, b) =>
-    a.time.localeCompare(b.time)
-  );
+  const eventsForSelectedDay = useMemo(() => {
+    if (!selectedDate) {
+      return [];
+    }
 
-  /*
-    This function runs when the user chooses a trip from the dropdown.
+    return events
+      .filter((event) => event.startTime.slice(0, 10) === selectedDate)
+      .sort(
+        (firstEvent, secondEvent) =>
+          new Date(firstEvent.startTime).getTime() -
+          new Date(secondEvent.startTime).getTime()
+      );
+  }, [events, selectedDate]);
 
-    React.ChangeEvent<HTMLSelectElement> tells TypeScript:
-    "This event came from a select dropdown."
-  */
+  useEffect(() => {
+    async function loadTrips() {
+      try {
+        setIsLoadingTrips(true);
+        setError("");
+
+        const loadedTrips = await getUserTrips();
+
+        setTrips(loadedTrips);
+        setSelectedTripId(
+          loadedTrips.length > 0 ? loadedTrips[0].id : null
+        );
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Failed to load trips"
+        );
+      } finally {
+        setIsLoadingTrips(false);
+      }
+    }
+
+    loadTrips();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedTrip) {
+      setEvents([]);
+      setSelectedDate(null);
+      return;
+    }
+
+    const trip = selectedTrip;
+    let requestCancelled = false;
+
+    async function loadEvents() {
+      try {
+        setIsLoadingEvents(true);
+        setError("");
+
+        const loadedEvents = await getTripEvents(trip);
+
+        if (!requestCancelled) {
+          setEvents(loadedEvents);
+          setSelectedDate(trip.startDate.slice(0, 10));
+        }
+      } catch (error) {
+        if (!requestCancelled) {
+          setEvents([]);
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Failed to load trip events"
+          );
+        }
+      } finally {
+        if (!requestCancelled) {
+          setIsLoadingEvents(false);
+        }
+      }
+    }
+
+    loadEvents();
+
+    return () => {
+      requestCancelled = true;
+    };
+  }, [selectedTrip]);
+
   function handleTripChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    /*
-      event.target.value comes from the selected <option>.
+    setSelectedTripId(Number(event.target.value));
+  }
 
-      Browser form values are strings, even if the value looks like a number.
-      Number(...) converts it into a number so it matches our trip id type.
-    */
-    const tripIdFromDropdown = Number(event.target.value);
+  async function handleCreateTrip(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
 
-    setSelectedTripId(tripIdFromDropdown);
+    if (tripStartDate >= tripEndDate) {
+      setError("The end date must be after the start date");
+      return;
+    }
 
-    /*
-      Reset to Day 1 whenever the selected trip changes.
+    try {
+      setIsCreatingTrip(true);
 
-      This will matter more later when different trips may have different
-      numbers of days.
-    */
-    setSelectedDay(1);
+      const newTrip = await createTrip({
+        name: tripName.trim(),
+        description: tripDescription.trim(),
+        startDate: tripStartDate,
+        endDate: tripEndDate,
+      });
+
+      setTrips((currentTrips) => [...currentTrips, newTrip]);
+      setSelectedTripId(newTrip.id);
+      setTripName("");
+      setTripDescription("");
+      setTripStartDate("");
+      setTripEndDate("");
+      setShowTripForm(false);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create trip"
+      );
+    } finally {
+      setIsCreatingTrip(false);
+    }
+  }
+
+  async function handleCreateEvent(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (selectedTripId === null || selectedDate === null) {
+      setError("Select a trip and day before adding an event");
+      return;
+    }
+
+    if (eventStartTime >= eventEndTime) {
+      setError("The event end time must be after its start time");
+      return;
+    }
+
+    try {
+      setIsCreatingEvent(true);
+
+      const newEvent = await createTripEvent(selectedTripId, {
+        title: eventTitle.trim(),
+        description: eventDescription.trim(),
+        startTime: `${selectedDate}T${eventStartTime}:00`,
+        endTime: `${selectedDate}T${eventEndTime}:00`,
+        timezone: eventTimezone,
+      });
+
+      setEvents((currentEvents) => [...currentEvents, newEvent]);
+      setEventTitle("");
+      setEventDescription("");
+      setEventStartTime("");
+      setEventEndTime("");
+      setEventTimezone("Europe/Vienna");
+      setShowEventForm(false);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create event"
+      );
+    } finally {
+      setIsCreatingEvent(false);
+    }
+  }
+
+  if (isLoadingTrips) {
+    return (
+      <main className="itinerary-page">
+        <p>Loading trips...</p>
+      </main>
+    );
   }
 
   return (
@@ -206,61 +268,241 @@ function ItineraryPage() {
           <p>Plan your trip day by day.</p>
         </div>
 
-        <div className="trip-picker">
-          <label htmlFor="trip-select">Select trip</label>
+        {trips.length > 0 && (
+          <div className="trip-picker">
+            <label htmlFor="trip-select">Select trip</label>
 
-          <select
-            id="trip-select"
-            value={selectedTripId}
-            onChange={handleTripChange}
-          >
-            {fakeTripOptions.map((trip) => (
-              <option key={trip.id} value={trip.id}>
-                {trip.name}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              id="trip-select"
+              value={selectedTripId ?? ""}
+              onChange={handleTripChange}
+            >
+              {trips.map((trip) => (
+                <option key={trip.id} value={trip.id}>
+                  {trip.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        <button className="primary-action" type="button">Add item</button>
+        <button
+          className="primary-action"
+          type="button"
+          onClick={() => {
+            setError("");
+            setShowTripForm((isOpen) => !isOpen);
+          }}
+        >
+          {showTripForm ? "Cancel" : "New trip"}
+        </button>
       </section>
 
-      <section className="selected-trip-summary">
-        <h2>{selectedTrip.name}</h2>
-      </section>
+      {showTripForm && (
+        <section className="new-trip-panel">
+          <h2>Create a new trip</h2>
 
-      <section className="day-selector">
-        {tripDays.map((day) => (
+          <form className="new-trip-form" onSubmit={handleCreateTrip}>
+            <label>
+              Trip name
+              <input
+                type="text"
+                value={tripName}
+                onChange={(event) => setTripName(event.target.value)}
+                required
+              />
+            </label>
+
+            <label>
+              Description
+              <textarea
+                value={tripDescription}
+                onChange={(event) => setTripDescription(event.target.value)}
+                rows={3}
+              />
+            </label>
+
+            <div className="trip-date-fields">
+              <label>
+                Start date
+                <input
+                  type="date"
+                  value={tripStartDate}
+                  onChange={(event) => setTripStartDate(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label>
+                End date
+                <input
+                  type="date"
+                  value={tripEndDate}
+                  min={tripStartDate || undefined}
+                  onChange={(event) => setTripEndDate(event.target.value)}
+                  required
+                />
+              </label>
+            </div>
+
+            <button
+              className="primary-action"
+              type="submit"
+              disabled={isCreatingTrip}
+            >
+              {isCreatingTrip ? "Creating..." : "Create trip"}
+            </button>
+          </form>
+        </section>
+      )}
+
+      {trips.length === 0 && !showTripForm && (
+        <section className="empty-state trips-empty-state">
+          <h2>No trips yet</h2>
+          <p>Create your first trip to start planning.</p>
+        </section>
+      )}
+
+      {selectedTrip && (
+        <section className="selected-trip-summary">
+          <div>
+            <h2>{selectedTrip.name}</h2>
+
+            {selectedTrip.description && (
+              <p>{selectedTrip.description}</p>
+            )}
+          </div>
+
           <button
-            className={day === selectedDay ? "day-button active" : "day-button"}
-            key={day}
+            className="primary-action"
             type="button"
-            onClick={() => setSelectedDay(day)}
+            onClick={() => {
+              setError("");
+              setShowEventForm((isOpen) => !isOpen);
+            }}
           >
-            Day {day}
+            {showEventForm ? "Cancel" : "Add event"}
           </button>
-        ))}
-      </section>
+        </section>
+      )}
 
-      <section className="itinerary-list">
-        <h2>Day {selectedDay}</h2>
+      {selectedTrip && <section className="day-selector">
+        <label htmlFor="day-select">Select day</label>
 
-        {sortedItems.length === 0 ? (
-          <p className="empty-state">No plans yet for this day.</p>
+        <select
+          id="day-select"
+          value={selectedDate ?? ""}
+          onChange={(event) => setSelectedDate(event.target.value)}
+        >
+          {tripDays.map((date, index) => (
+            <option key={date} value={date}>
+              {formatDayLabel(date, index)}
+            </option>
+          ))}
+        </select>
+      </section>}
+
+      {showEventForm && selectedTrip && selectedDate && (
+        <section className="new-event-panel">
+          <h2>Add an event</h2>
+          <p>{formatDayLabel(selectedDate, tripDays.indexOf(selectedDate))}</p>
+
+          <form className="new-event-form" onSubmit={handleCreateEvent}>
+            <label>
+              Event title
+              <input
+                type="text"
+                value={eventTitle}
+                onChange={(event) => setEventTitle(event.target.value)}
+                required
+              />
+            </label>
+
+            <label>
+              Description
+              <textarea
+                value={eventDescription}
+                onChange={(event) => setEventDescription(event.target.value)}
+                rows={3}
+              />
+            </label>
+
+            <div className="event-time-fields">
+              <label>
+                Start time
+                <input
+                  type="time"
+                  value={eventStartTime}
+                  onChange={(event) => setEventStartTime(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label>
+                End time
+                <input
+                  type="time"
+                  value={eventEndTime}
+                  onChange={(event) => setEventEndTime(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label>
+                Timezone
+                <input
+                  type="text"
+                  value={eventTimezone}
+                  onChange={(event) => setEventTimezone(event.target.value)}
+                  required
+                />
+              </label>
+            </div>
+
+            <button
+              className="primary-action"
+              type="submit"
+              disabled={isCreatingEvent}
+            >
+              {isCreatingEvent ? "Adding..." : "Add event"}
+            </button>
+          </form>
+        </section>
+      )}
+
+      {error && <p className="error-message">{error}</p>}
+
+      {selectedTrip && <section className="itinerary-list">
+        <h2>
+          {selectedDate
+            ? formatDayLabel(
+                selectedDate,
+                tripDays.indexOf(selectedDate)
+              )
+            : "Select a day"}
+        </h2>
+
+        {isLoadingEvents ? (
+          <p>Loading events...</p>
+        ) : eventsForSelectedDay.length === 0 ? (
+          <p className="empty-state">No events planned for this day.</p>
         ) : (
-          sortedItems.map((item) => (
-            <article className="itinerary-card" key={item.id}>
-              <div className="item-time">{item.time}</div>
+          eventsForSelectedDay.map((event) => (
+            <article className="itinerary-card" key={event.id}>
+              <div className="item-time">
+                {formatTime(event.startTime)}
+              </div>
 
               <div className="item-details">
-                <div className="item-title-row">
-                  <h3>{item.title}</h3>
-                  <span>{item.category}</span>
-                </div>
+                <h3>{event.title}</h3>
 
-                <p>{item.location}</p>
-                <p>{item.durationMinutes} minutes</p>
-                <p>{item.notes}</p>
+                {event.description && <p>{event.description}</p>}
+
+                <p>
+                  {formatTime(event.startTime)}–{formatTime(event.endTime)}
+                </p>
+
+                <p>{event.timezone}</p>
               </div>
 
               <div className="item-actions">
@@ -270,9 +512,10 @@ function ItineraryPage() {
             </article>
           ))
         )}
-      </section>
+      </section>}
     </main>
   );
 }
 
 export default ItineraryPage;
+
