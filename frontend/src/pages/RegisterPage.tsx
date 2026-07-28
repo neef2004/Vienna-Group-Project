@@ -94,6 +94,9 @@ function RegisterPage() {
           {isLoading ? "Registering" : "Register"}
         </button>
       </form>
+      <button type="button" onClick={() => navigate("/login")}>
+        Already have an account? Log in!
+      </button>
     </main>
   );
 }
