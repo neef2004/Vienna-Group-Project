@@ -69,7 +69,7 @@ function HomePage() {
           <div className="orb orb-two" />
           <div className="logo-card">
             <img
-              src="/src/itineFairy logo.jpg"
+              src="/src/assets/itineFairy logo.jpg"
               alt="ItineFairy, your magical travel planner"
             />
           </div>

@@ -566,7 +566,6 @@ function ItineraryPage() {
         <div>
           <span className="section-kicker">✦ Trip planner</span>
           <h1>Your itinerary</h1>
-          <p>Every detail, beautifully organized.</p>
         </div>
 
         {trips.length > 0 && (

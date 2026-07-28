@@ -226,7 +226,6 @@ select {
   border-radius: 45% 45% 22% 45%;
   background: white;
   box-shadow: 0 30px 80px rgba(24, 59, 104, 0.16);
-  transform: rotate(2deg);
 }
 
 .logo-card::after {
