@@ -58,6 +58,8 @@ type BackendTrip = {
     timezone: string;
   };
 
+  export type UpdateEventInput = CreateEventInput;
+
   //reusable auth function
   function getAuthToken(): string {
     const token = localStorage.getItem("token");
@@ -217,6 +219,52 @@ type BackendTrip = {
 
     const data: BackendCalendarEvent = await response.json();
     return mapCalendarEvent(data);
+  }
+
+  export async function updateTripEvent(
+    tripId: number,
+    eventId: number,
+    input: UpdateEventInput
+  ): Promise<CalendarEvent> {
+    const response = await authenticatedFetch(
+      `/api/trips/${tripId}/events/${eventId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: input.title,
+          description: input.description || null,
+          start_time: input.startTime,
+          end_time: input.endTime,
+          timezone: input.timezone
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error ?? "Failed to update event");
+    }
+
+    const data: BackendCalendarEvent = await response.json();
+    return mapCalendarEvent(data);
+  }
+
+  export async function deleteTripEvent(
+    tripId: number,
+    eventId: number
+  ): Promise<void> {
+    const response = await authenticatedFetch(
+      `/api/trips/${tripId}/events/${eventId}`,
+      { method: "DELETE" }
+    );
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error ?? "Failed to delete event");
+    }
   }
 
   export async function exportTripCalendar(
