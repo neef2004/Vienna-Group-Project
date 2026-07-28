@@ -30,15 +30,11 @@ function HomePage() {
 
       <main className="hero">
         <section className="hero-copy">
-          <div className="eyebrow">
-            <span aria-hidden="true">✦</span>
-            A little magic for every journey
-          </div>
-          <h1>Your dream trip,<br /><em>beautifully planned.</em></h1>
+          
+          <h1>Your dream trip,<br /><em>made easy.</em></h1>
 
           <p>
-            Build thoughtful itineraries, keep every reservation close, and
-            turn the details of your next adventure into one effortless plan.
+            Build thoughtful itineraries, with a touch of magic.
           </p>
 
           <div className="hero-actions">
@@ -55,12 +51,6 @@ function HomePage() {
             >
               I already have an account
             </button>
-          </div>
-
-          <div className="hero-benefits" aria-label="ItineFairy benefits">
-            <span>✓ Free to start</span>
-            <span>✓ Plan day by day</span>
-            <span>✓ Export your calendar</span>
           </div>
         </section>
 
