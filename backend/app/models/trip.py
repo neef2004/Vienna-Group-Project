@@ -19,8 +19,18 @@ def get_trip_by_id(trip_id, user_id):
     db = get_db()
     
     return db.execute(
-        "SELECT * FROM trip WHERE id = ? AND user_id = ?",
-        (trip_id, user_id)
+        """
+        SELECT t.*, u.email AS owner_email
+        FROM trip t
+        JOIN users u ON u.id = t.user_id
+        LEFT JOIN trip_collaborator tc
+          ON tc.trip_id = t.id
+         AND tc.user_id = ?
+         AND tc.accepted = 1
+        WHERE t.id = ?
+          AND (t.user_id = ? OR tc.user_id IS NOT NULL)
+        """,
+        (user_id, trip_id, user_id)
     ).fetchone()
 
 # get trips using just user_id
@@ -119,7 +129,13 @@ def get_trip_collaborators(trip_id):
     db = get_db()
     
     return db.execute(
-        "SELECT * FROM trip_collaborator WHERE trip_id = ?",
+        """
+        SELECT tc.*, u.email
+        FROM trip_collaborator tc
+        JOIN users u ON u.id = tc.user_id
+        WHERE tc.trip_id = ?
+        ORDER BY tc.invited_at
+        """,
         (trip_id,)
     ).fetchall()
 
@@ -172,6 +188,16 @@ def get_user_trips(user_id):
     db = get_db()
     
     return db.execute(
-        "SELECT t.* FROM trip t LEFT JOIN trip_collaborator tc ON t.id = tc.trip_id WHERE t.user_id = ? OR tc.user_id = ? AND tc.accepted = 1",
+        """
+        SELECT DISTINCT t.*, u.email AS owner_email
+        FROM trip t
+        JOIN users u ON u.id = t.user_id
+        LEFT JOIN trip_collaborator tc
+          ON tc.trip_id = t.id
+         AND tc.user_id = ?
+         AND tc.accepted = 1
+        WHERE t.user_id = ? OR tc.user_id IS NOT NULL
+        ORDER BY t.created_at
+        """,
         (user_id, user_id)
     ).fetchall()

@@ -147,6 +147,7 @@
 }
 
 .selected-trip-summary,
+.collaboration-panel,
 .view-toggle,
 .day-selector,
 .itinerary-list,
@@ -161,6 +162,7 @@
 
 .new-trip-panel,
 .new-event-panel,
+.collaboration-panel,
 .trips-empty-state {
   margin-bottom: 1.5rem;
   padding: 1.5rem;
@@ -169,6 +171,121 @@
   background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 16px 45px rgba(24, 59, 104, 0.08);
   backdrop-filter: blur(10px);
+}
+
+.trip-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.secondary-action {
+  min-height: 46px;
+  padding: 0 1.2rem;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+.collaboration-panel {
+  margin-bottom: 1.5rem;
+}
+
+.collaboration-panel h2,
+.collaboration-panel h3 {
+  margin: 0;
+  color: var(--fairy-navy);
+}
+
+.collaboration-panel > div > p {
+  margin: 0.35rem 0 1.2rem;
+  color: #6f8794;
+}
+
+.collaboration-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 210px) auto;
+  align-items: end;
+  gap: 1rem;
+}
+
+.collaboration-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--fairy-teal);
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.collaboration-form input,
+.collaboration-form select,
+.collaborator-row select {
+  min-height: 44px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(85, 155, 152, 0.35);
+  border-radius: 10px;
+  background: white;
+  color: var(--fairy-navy);
+}
+
+.collaboration-message {
+  margin: 1rem 0 0;
+  color: #31736f;
+  font-weight: 700;
+}
+
+.invitation-link {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.invitation-link input {
+  min-width: 0;
+  flex: 1;
+  min-height: 42px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(85, 155, 152, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--fairy-navy);
+}
+
+.copy-invitation-button {
+  min-height: 40px;
+  padding: 0 1rem;
+}
+
+.collaborator-list {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(85, 155, 152, 0.18);
+}
+
+.collaborator-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(85, 155, 152, 0.13);
+}
+
+.collaborator-row > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.collaborator-row span {
+  color: #6f8794;
+  font-size: 0.86rem;
+}
+
+.remove-collaborator-button {
+  min-height: 40px;
+  color: #a3374c !important;
 }
 
 .new-event-panel h2,
@@ -455,6 +572,20 @@
   }
 
   .selected-trip-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .trip-summary-actions {
+    align-items: stretch;
+  }
+
+  .collaboration-form,
+  .collaborator-row {
+    grid-template-columns: 1fr;
+  }
+
+  .invitation-link {
     align-items: stretch;
     flex-direction: column;
   }
