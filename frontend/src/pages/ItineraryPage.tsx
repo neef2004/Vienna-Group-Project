@@ -12,6 +12,7 @@ import {
 } from "../api/trips";
 import { signOut } from "../api/auth";
 import CalendarDisplay from "./CalendarDisplay";
+import itineFairyLogo from "../assets/itineFairy_logo_notext.svg";
 
 /*
     These are date formatting helper function
@@ -362,7 +363,12 @@ function ItineraryPage() {
           aria-label="Back to ItineFairy home"
           onClick={() => navigate("/")}
         >
-          <span className="brand-mark" aria-hidden="true">✦</span>
+          <img
+            className="itinerary-brand-logo"
+            src={itineFairyLogo}
+            alt=""
+            aria-hidden="true"
+          />
           <span>itineFairy</span>
         </button>
         <div className="itinerary-nav-actions">

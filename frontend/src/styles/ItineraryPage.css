@@ -124,6 +124,13 @@
   background: transparent;
 }
 
+.itinerary-brand-logo {
+  display: block;
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+
 .primary-action {
   min-height: 46px;
   padding: 0 1.2rem;

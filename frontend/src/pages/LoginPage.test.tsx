@@ -17,6 +17,18 @@ describe("LoginPage", () => {
       })
     ).toBeInTheDocument();
   });
+
+  test("branding links back to the landing page", () => {
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole("link", { name: /itinefairy home/i })
+    ).toHaveAttribute("href", "/");
+  });
 });
 
 test("renders login button", () => {

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import TextInput from "../components/ui/TextInput";
+import AuthHeader from "../components/AuthHeader";
 import { useNavigate } from "react-router-dom";
 
 /*
@@ -106,9 +107,11 @@ function LoginPage() {
   }
 
   return (
-    <main className="auth-page">
-      <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Welcome Back!</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="auth-shell">
+      <AuthHeader />
+      <main className="auth-page">
+        <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Welcome Back!</h1>
+        <form onSubmit={handleSubmit}>
         {/*text input for email*/}
         <TextInput
           label="Email"
@@ -137,9 +140,10 @@ function LoginPage() {
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Logging in..." : "Login"}
         </button>
-      </form>
-      <button onClick={() => navigate("/register")}>Don't have an account? Sign Up!</button>
-    </main>
+        </form>
+        <button onClick={() => navigate("/register")}>Don't have an account? Sign Up!</button>
+      </main>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TextInput from "../components/ui/TextInput";
+import AuthHeader from "../components/AuthHeader";
 import { useNavigate } from "react-router-dom";
 
 async function registerUser(
@@ -59,9 +60,11 @@ function RegisterPage() {
   }
 
   return (
-    <main className="auth-page">
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="auth-shell">
+      <AuthHeader />
+      <main className="auth-page">
+        <h1>Register</h1>
+        <form onSubmit={handleSubmit}>
         <TextInput
           label="Email"
           name="email"
@@ -93,11 +96,12 @@ function RegisterPage() {
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Registering" : "Register"}
         </button>
-      </form>
-      <button type="button" onClick={() => navigate("/login")}>
-        Already have an account? Log in!
-      </button>
-    </main>
+        </form>
+        <button type="button" onClick={() => navigate("/login")}>
+          Already have an account? Log in!
+        </button>
+      </main>
+    </div>
   );
 }
 
