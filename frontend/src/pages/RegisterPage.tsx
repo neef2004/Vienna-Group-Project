@@ -25,7 +25,17 @@ async function registerUser(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "signup failed");
+    const messages = Array.isArray(data.errors)
+      ? data.errors.filter(
+          (message: unknown): message is string => typeof message === "string"
+        )
+      : [];
+
+    throw new Error(
+      messages.length > 0
+        ? messages.join("\n")
+        : data.error || "Signup failed"
+    );
   }
   return data;
 }
@@ -92,7 +102,13 @@ function RegisterPage() {
           placeholder="Please retype password"
         />
 
-        {error && <p>{error}</p>}
+        {error && (
+          <ul className="signup-errors" role="alert">
+            {error.split("\n").map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        )}
 
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Registering" : "Register"}

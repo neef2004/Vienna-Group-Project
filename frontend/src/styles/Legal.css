@@ -103,7 +103,8 @@
 }
 
 .travel-notice {
-  margin-top: 2rem;
+  width: min(100%, 760px);
+  margin: 3rem auto 0;
   padding: 0.9rem 1rem;
   border: 1px solid rgba(85, 155, 152, 0.3);
   border-radius: 12px;
@@ -111,6 +112,7 @@
   color: #5d737d;
   font-size: 0.88rem;
   line-height: 1.55;
+  text-align: center;
 }
 
 .travel-notice strong {

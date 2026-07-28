@@ -116,6 +116,22 @@
   text-align: center;
 }
 
+.signup-errors {
+  margin: 0;
+  padding: 0.85rem 1rem 0.85rem 2rem;
+  border: 1px solid rgba(214, 40, 123, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 240, 247, 0.78);
+  color: #a51f61;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.signup-errors li + li {
+  margin-top: 0.35rem;
+}
+
 /* ===== Buttons ===== */
 .auth-page button {
   padding: 0.9rem 1.2rem;
