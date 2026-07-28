@@ -1,18 +1,18 @@
 /* ===== Overall Layout ===== */
-.auth-page {
+main {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #bda0df, #a3dcda, #ffffff);
+  background: linear-gradient(135deg, #559b98, #a3dcda, #ffffff);
   font-family: "Playfair Display", Georgia, serif;
-  color: #ffffff;
+  color: #4a2b5f;
 }
 
 /* ===== Title ===== */
-.auth-page h1 {
+main h1 {
   font-size: 2.5rem;
   margin-bottom: 1.5rem;
   background: linear-gradient(90deg, #8238c2, #8238c2);
@@ -23,7 +23,7 @@
 }
 
 /* ===== Form Container ===== */
-.auth-page form {
+form {
   width: 100%;
   max-width: 380px;
   background: rgba(255, 255, 255, 0.55);
@@ -38,13 +38,13 @@
 }
 
 /* ===== Text Inputs ===== */
-.auth-page form label {
+form label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #5a2d7a;
 }
 
-.auth-page form input {
+form input {
   width: 100%;
   padding: 0.8rem 1rem;
   border-radius: 12px;
@@ -54,55 +54,55 @@
   font-size: 1rem;
 }
 
-.auth-page form input:focus {
+form input:focus {
   border-color: #c77dff;
   box-shadow: 0 0 10px rgba(199, 125, 255, 0.5);
   outline: none;
 }
 
 /* ===== Error Message ===== */
-.auth-page form p {
+form p {
   color: #d6287b;
   font-weight: 600;
   text-align: center;
 }
 
 /* ===== Buttons ===== */
-.auth-page button {
+button {
   padding: 0.9rem 1.2rem;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(90deg, #62afab, #62afab);
-  color: #ddfff7;
+  background: linear-gradient(90deg, #183b68, #559b98);
+  color: white;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auth-page button:hover:not(:disabled) {
+button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(159, 252, 255, 0.4);
+  box-shadow: 0 6px 15px rgba(199, 125, 255, 0.4);
 }
 
-.auth-page button:disabled {
+button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* ===== Sign Up Button ===== */
-.auth-page > button {
+main > button {
   margin-top: 1.5rem;
   background: transparent;
-  color: #ffffff;
+  color: #a3dcda;
   font-weight: 600;
   text-decoration: underline;
   box-shadow: none;
 }
 
 
-.auth-page > button:hover {
-  color: #a84bd9;
+main > button:hover {
+  color: #bda0df;
 }
 
 /* ===== Animations ===== */
@@ -116,5 +116,6 @@
     transform: translateY(0);
   }
 }
+
 
 

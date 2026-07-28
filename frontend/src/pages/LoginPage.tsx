@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TextInput from "../components/ui/TextInput";
 import { useNavigate } from "react-router-dom";
 
@@ -71,7 +71,7 @@ function LoginPage() {
   <HTMLFormElement> is a generic type parameter that tells TypeScript
   what element generated the event. in this case it is an HTML form (text input)
   */
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); //prevents the page from refreshing upon form submission since state info is stored
 
     setError(""); //blanks out error code
@@ -107,7 +107,7 @@ function LoginPage() {
 
   return (
     <main className="auth-page">
-      <h1>Welcome Back!</h1>
+      <h1 style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Welcome Back!</h1>
       <form onSubmit={handleSubmit}>
         {/*text input for email*/}
         <TextInput
