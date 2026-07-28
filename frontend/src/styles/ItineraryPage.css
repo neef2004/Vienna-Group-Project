@@ -382,6 +382,16 @@
   padding: 0 0.75rem;
 }
 
+.item-actions .delete-event-button {
+  border-color: rgba(163, 55, 76, 0.3);
+  color: #a3374c;
+}
+
+.item-actions .delete-event-button:hover {
+  border-color: #a3374c;
+  background: #fff0f0;
+}
+
 .empty-state {
   margin-top: 0;
   padding: 1.2rem;

@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import {
   createTripEvent,
   createTrip,
+  deleteTripEvent,
   getTripEvents,
   getUserTrips,
+  updateTripEvent,
   type CalendarEvent,
   type Trip,
 } from "../api/trips";
@@ -69,6 +71,8 @@ function ItineraryPage() {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
@@ -179,7 +183,35 @@ function ItineraryPage() {
   }, [selectedTrip]);
 
   function handleTripChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    resetEventForm();
     setSelectedTripId(Number(event.target.value));
+  }
+
+  function handleCalendarTripSelect(tripId: number) {
+    resetEventForm();
+    setSelectedTripId(tripId);
+  }
+
+  function resetEventForm() {
+    setEventTitle("");
+    setEventDescription("");
+    setEventStartTime("");
+    setEventEndTime("");
+    setEventTimezone("Europe/Vienna");
+    setEditingEventId(null);
+    setShowEventForm(false);
+  }
+
+  function handleEditEvent(calendarEvent: CalendarEvent) {
+    setError("");
+    setEditingEventId(calendarEvent.id);
+    setEventTitle(calendarEvent.title);
+    setEventDescription(calendarEvent.description ?? "");
+    setEventStartTime(formatTime(calendarEvent.startTime));
+    setEventEndTime(formatTime(calendarEvent.endTime));
+    setEventTimezone(calendarEvent.timezone);
+    setSelectedDate(calendarEvent.startTime.slice(0, 10));
+    setShowEventForm(true);
   }
 
   async function handleCreateTrip(event: React.FormEvent<HTMLFormElement>) {
@@ -234,27 +266,68 @@ function ItineraryPage() {
     try {
       setIsCreatingEvent(true);
 
-      const newEvent = await createTripEvent(selectedTripId, {
+      const eventInput = {
         title: eventTitle.trim(),
         description: eventDescription.trim(),
         startTime: `${selectedDate}T${eventStartTime}:00`,
         endTime: `${selectedDate}T${eventEndTime}:00`,
         timezone: eventTimezone,
-      });
+      };
 
-      setEvents((currentEvents) => [...currentEvents, newEvent]);
-      setEventTitle("");
-      setEventDescription("");
-      setEventStartTime("");
-      setEventEndTime("");
-      setEventTimezone("Europe/Vienna");
-      setShowEventForm(false);
+      if (editingEventId === null) {
+        const newEvent = await createTripEvent(selectedTripId, eventInput);
+        setEvents((currentEvents) => [...currentEvents, newEvent]);
+      } else {
+        const updatedEvent = await updateTripEvent(
+          selectedTripId,
+          editingEventId,
+          eventInput
+        );
+        setEvents((currentEvents) =>
+          currentEvents.map((currentEvent) =>
+            currentEvent.id === updatedEvent.id ? updatedEvent : currentEvent
+          )
+        );
+      }
+
+      resetEventForm();
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Failed to create event"
+        error instanceof Error
+          ? error.message
+          : editingEventId === null
+            ? "Failed to create event"
+            : "Failed to update event"
       );
     } finally {
       setIsCreatingEvent(false);
+    }
+  }
+
+  async function handleDeleteEvent(calendarEvent: CalendarEvent) {
+    if (
+      !window.confirm(`Delete "${calendarEvent.title}"? This cannot be undone.`)
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingEventId(calendarEvent.id);
+      setError("");
+      await deleteTripEvent(calendarEvent.tripId, calendarEvent.id);
+      setEvents((currentEvents) =>
+        currentEvents.filter((event) => event.id !== calendarEvent.id)
+      );
+
+      if (editingEventId === calendarEvent.id) {
+        resetEventForm();
+      }
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to delete event"
+      );
+    } finally {
+      setDeletingEventId(null);
     }
   }
 
@@ -422,7 +495,12 @@ function ItineraryPage() {
             type="button"
             onClick={() => {
               setError("");
-              setShowEventForm((isOpen) => !isOpen);
+              if (showEventForm) {
+                resetEventForm();
+              } else {
+                setEditingEventId(null);
+                setShowEventForm(true);
+              }
             }}
           >
             {showEventForm ? "Cancel" : "Add event"}
@@ -469,7 +547,7 @@ function ItineraryPage() {
 
       {showEventForm && selectedTrip && selectedDate && (
         <section className="new-event-panel">
-          <h2>Add an event</h2>
+          <h2>{editingEventId === null ? "Add an event" : "Edit event"}</h2>
           <p>{formatDayLabel(selectedDate, tripDays.indexOf(selectedDate))}</p>
 
           <form className="new-event-form" onSubmit={handleCreateEvent}>
@@ -529,7 +607,13 @@ function ItineraryPage() {
               type="submit"
               disabled={isCreatingEvent}
             >
-              {isCreatingEvent ? "Adding..." : "Add event"}
+              {isCreatingEvent
+                ? editingEventId === null
+                  ? "Adding..."
+                  : "Saving..."
+                : editingEventId === null
+                  ? "Add event"
+                  : "Save changes"}
             </button>
           </form>
         </section>
@@ -545,7 +629,7 @@ function ItineraryPage() {
           events={events}
           loading={isLoadingEvents}
           selectedDate={selectedDate}
-          onTripSelect={setSelectedTripId}
+          onTripSelect={handleCalendarTripSelect}
           onDateSelect={setSelectedDate}
         />
       )}
@@ -584,8 +668,21 @@ function ItineraryPage() {
               </div>
 
               <div className="item-actions">
-                <button type="button">Edit</button>
-                <button type="button">Delete</button>
+                <button
+                  type="button"
+                  onClick={() => handleEditEvent(event)}
+                  disabled={deletingEventId === event.id}
+                >
+                  Edit
+                </button>
+                <button
+                  className="delete-event-button"
+                  type="button"
+                  onClick={() => handleDeleteEvent(event)}
+                  disabled={deletingEventId === event.id}
+                >
+                  {deletingEventId === event.id ? "Deleting..." : "Delete"}
+                </button>
               </div>
             </article>
           ))
