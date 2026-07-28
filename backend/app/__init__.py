@@ -10,13 +10,15 @@ from app.routes.auth import jwt_blocklist
 
 # create and configure the Flask app
 # JWT auth, database, and /api routes
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
-
     app.config["JWT_SECRET_KEY"] = "change-this-to-a-real-secret"
     app.config["DATABASE"] = "app.db"
     app.config["JWT_BLOCKLIST_ENABLED"] = True
     app.config["JWT_BLOCKLIST_TOKEN_CHECKS"] = ["access", "refresh"]
+
+    if test_config is not None:
+        app.config.update(test_config)
 
     jwt = JWTManager(app) # store as an instance to register callbacks
 

@@ -1,3 +1,5 @@
+from pickle import INT
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 from datetime import datetime
@@ -32,7 +34,7 @@ def require_auth(f):
     @wraps(f) # keep the wrapped route's name/info intact
     def decorated_function(*args, **kwargs):
         verify_jwt_in_request()
-        user_id = int(get_jwt_identity()) # header value is text or None
+        user_id = int(get_jwt_identity())
         # convert to int and hand user_id to the route
         return f(*args, user_id=user_id, **kwargs)
     return decorated_function
@@ -63,13 +65,18 @@ def get_trips(user_id):
 # Create a new trip after validating name and the date range.
 def create_trip_route(user_id):
     try:
-        data = request.get_json()
         
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
+
         if not data.get('name'):
-            # name is required
             return jsonify({'error': 'Trip name is required'}), 400
-        
-        # parse iso strings into datetimes (raises ValueError if malformed -> caught below)
+
+        if not data.get('start_date') or not data.get('end_date'):
+            return jsonify({'error': 'start_date and end_date are required'}), 400
+
         start_date = datetime.fromisoformat(data.get('start_date'))
         end_date = datetime.fromisoformat(data.get('end_date'))
         
@@ -132,6 +139,9 @@ def update_trip_route(trip_id, user_id):
         
         data = request.get_json()
         
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
+
         # fall back to the existing value when a field isn't sent (partial update)
         name = data.get('name', trip['name'])
         description = data.get('description', trip['description'])
@@ -245,7 +255,10 @@ def create_event_route(trip_id, user_id):
             # trip missing or this user can't see it
             return jsonify({'error': 'Trip not found'}), 404
         
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
         
         # every one of these must be present in the body
         required_fields = ['title', 'start_time', 'end_time']
@@ -302,7 +315,10 @@ def update_event_route(trip_id, event_id, user_id):
         if not event or event['trip_id'] != trip_id:
             return jsonify({'error': 'Event not found'}), 404
         
-        data = request.get_json()
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid or missing JSON body'}), 400
         
         # fall back to the existing value when a field isn't sent (partial update)
         title = data.get('title', event['title'])

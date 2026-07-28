@@ -1,12 +1,10 @@
 import sqlite3
 from flask import g, current_app
 
-DATABASE = "app.db"
-
 # open a sqlite connection for this request (reuse if already open) and return rows as dict-like objects
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(DATABASE)
+        g.db = sqlite3.connect(current_app.config["DATABASE"])
         g.db.row_factory = sqlite3.Row
 
     return g.db

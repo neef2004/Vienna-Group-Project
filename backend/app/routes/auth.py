@@ -21,7 +21,7 @@ auth_bp = Blueprint("auth", __name__)
 def login():
     data = request.get_json(silent=True)
 
-    if not data:
+    if not isinstance(data, dict):
         # body was missing or not valid JSON
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
 
@@ -61,7 +61,7 @@ def login():
 # Register a new account after validating email format, password strength, and uniqueness.
 def signup():
     data = request.get_json(silent=True)
-    if not data:
+    if not isinstance(data, dict):
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
 
     email = data.get("email", "").strip().lower()
@@ -86,17 +86,15 @@ def signup():
     # is_valid_password returns (bool, message); msg explains why it failed
     valid, msg = is_valid_password(password)
     if not valid:
-        return jsonify({"success": False, "error": msg}), 400
+        return jsonify({"success": False, "errors": msg}), 400
 
     if get_user_by_email(email):
         # email already taken -> 409 conflict
         return jsonify({"success": False, "error": "Email is already registered"}), 409
 
-    create_user(email, password) # model handles hashing the password
+    user_id = create_user(email, password) # model handles hashing the password
 
-    user = get_user_by_email(email)
-
-    return jsonify({"success": True, "user": {"id": user["id"], "email": email}}), 201
+    return jsonify({"success": True, "user": {"id": user_id, "email": email}}), 201
 
 # POST /forgot-password, start a password reset. always says ok even if email is unknown (so no one can guess which emails exist).
 # method: POST
@@ -111,7 +109,7 @@ def signup():
 def forgot_password():
     data = request.get_json(silent=True)
     
-    if not data:
+    if not isinstance(data, dict):
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
     
     email = data.get("email", "").strip().lower()
@@ -146,7 +144,7 @@ def forgot_password():
 def reset_password():
     data = request.get_json(silent=True)
     
-    if not data:
+    if not isinstance(data, dict):
         return jsonify({"success": False, "error": "Invalid or missing JSON body"}), 400
     
     token = data.get("token") # the token issued by forgot_password
@@ -173,7 +171,7 @@ def reset_password():
     # check strength only after the token is confirmed valid
     valid, msg = is_valid_password(new_password)
     if not valid:
-        return jsonify({"success": False, "error": msg}), 400
+        return jsonify({"success": False, "errors": msg}), 400
     
     # reset_token['user_id'] tells us whose password to change
     update_password(reset_token['user_id'], new_password)
