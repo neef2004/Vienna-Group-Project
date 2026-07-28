@@ -1,0 +1,129 @@
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell > :first-child {
+  flex: 1;
+}
+
+.legal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem max(1.25rem, calc((100vw - 1180px) / 2));
+  border-top: 1px solid rgba(85, 155, 152, 0.22);
+  background: #fffdfb;
+  color: #637983;
+  font-size: 0.88rem;
+}
+
+.legal-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.legal-footer a,
+.legal-page a,
+.privacy-form-note a {
+  color: #315f75;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.legal-footer a:hover,
+.legal-page a:hover,
+.privacy-form-note a:hover {
+  color: #4a2b5f;
+}
+
+.legal-page {
+  box-sizing: border-box;
+  min-height: auto;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 3rem 1.25rem;
+  background: linear-gradient(145deg, #f3fbfa, #fffdfb 52%, #f7f0fb);
+  color: #263f4a;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.legal-card {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  border: 1px solid rgba(85, 155, 152, 0.22);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 55px rgba(55, 83, 94, 0.1);
+}
+
+.legal-page h1 {
+  margin: 1.5rem 0 0.25rem;
+  color: #4a2b5f;
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  letter-spacing: -0.03em;
+}
+
+.legal-page h2 {
+  margin: 2rem 0 0.6rem;
+  color: #315f75;
+  font-size: 1.15rem;
+}
+
+.legal-page p,
+.legal-page li {
+  line-height: 1.7;
+}
+
+.legal-page li + li {
+  margin-top: 0.6rem;
+}
+
+.legal-updated {
+  color: #6f828a;
+}
+
+.legal-back-link {
+  font-weight: 700;
+}
+
+.privacy-form-note {
+  margin: 0;
+  color: #596f79;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.travel-notice {
+  margin-top: 2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(85, 155, 152, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.68);
+  color: #5d737d;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.travel-notice strong {
+  color: #315f75;
+}
+
+@media (max-width: 600px) {
+  .legal-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .legal-page {
+    padding: 1.5rem 0.9rem;
+  }
+}

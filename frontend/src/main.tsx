@@ -4,6 +4,7 @@ import App from './App.tsx'
 import "./styles/Auth.css";
 import "./styles/HomePage.css";
 import "./styles/ItineraryPage.css";
+import "./styles/Legal.css";
 import 'bootstrap/dist/css/bootstrap.css'
 
 createRoot(document.getElementById('root')!).render(

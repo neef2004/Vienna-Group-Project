@@ -1000,6 +1000,12 @@ function ItineraryPage() {
           ))
         )}
       </section>}
+
+      <aside className="travel-notice" aria-label="Travel information notice">
+        <strong>Check before you travel.</strong> Verify opening hours,
+        reservations, prices, transport schedules, entry requirements and
+        official safety information with the relevant provider or authority.
+      </aside>
     </main>
   );
 }

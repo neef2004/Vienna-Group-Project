@@ -2,6 +2,7 @@ import { useState } from "react";
 import TextInput from "../components/ui/TextInput";
 import AuthHeader from "../components/AuthHeader";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 async function registerUser(
   email: string,
@@ -96,6 +97,10 @@ function RegisterPage() {
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Registering" : "Register"}
         </button>
+        <p className="privacy-form-note">
+          We use your account and trip data to provide this service. See our{" "}
+          <Link to="/privacy">Privacy notice</Link>.
+        </p>
         </form>
         <button type="button" onClick={() => navigate("/login")}>
           Already have an account? Log in!
