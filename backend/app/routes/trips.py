@@ -8,6 +8,7 @@ from app.models.trip import (
     create_trip,
     get_trip_by_id,
     get_trips_by_user,
+    get_user_trips,
     update_trip,
     delete_trip,
     create_event,
@@ -49,7 +50,7 @@ def require_auth(f):
 # List every trip owned by the current user.
 def get_trips(user_id):
     try:
-        trips = get_trips_by_user(user_id)
+        trips = get_user_trips(user_id)
         # turn each db row into a dict so it can be json'd
         return jsonify([dict(trip) for trip in trips]), 200
     except Exception as e:

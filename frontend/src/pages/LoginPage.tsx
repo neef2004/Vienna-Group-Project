@@ -56,6 +56,9 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate(); //this is a react-router-dom hook that allows us to redirect the user to another page
+  const redirectAfterLogin =
+    new URLSearchParams(window.location.search).get("redirect") ||
+    sessionStorage.getItem("redirectAfterLogin");
 
   useEffect(() => {
     const authMessage = sessionStorage.getItem("authMessage");
@@ -93,8 +96,14 @@ function LoginPage() {
       //log success
       console.log("Login successfull:", result.user);
 
-      //navigate to the itinerary page
-      navigate("/itinerary", {replace: true}) //replace true replaces the current page in history instead of adding a new page so you can use back arrows
+      sessionStorage.removeItem("redirectAfterLogin");
+      const safeRedirect =
+        redirectAfterLogin?.startsWith("/") && !redirectAfterLogin.startsWith("//")
+          ? redirectAfterLogin
+          : "/itinerary";
+
+      //navigate to the itinerary page, or back to a pending invitation
+      navigate(safeRedirect, {replace: true}) //replace true replaces the current page in history instead of adding a new page so you can use back arrows
 
       //later we will have to redirect to the dashboard here
       //navigate(dashboard)

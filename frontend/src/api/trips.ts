@@ -8,6 +8,7 @@ type BackendTrip = {
     end_date: string;
     created_at: string;
     updated_at: string;
+    owner_email?: string;
   };
   
   type BackendCalendarEvent = {
@@ -30,6 +31,7 @@ type BackendTrip = {
     endDate: string;
     createdAt: string;
     updatedAt: string;
+    ownerEmail: string | null;
   };
   
   export type CalendarEvent = {
@@ -104,6 +106,7 @@ type BackendTrip = {
         endDate: trip.end_date,
         createdAt: trip.created_at,
         updatedAt: trip.updated_at,
+        ownerEmail: trip.owner_email ?? null,
     };
   }
   //same thing for calendar events

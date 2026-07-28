@@ -11,6 +11,15 @@ import {
   type Trip,
 } from "../api/trips";
 import { signOut } from "../api/auth";
+import {
+  acceptInvitation,
+  getCollaborators,
+  inviteCollaborator,
+  removeCollaborator,
+  updateCollaboratorPermission,
+  type Collaborator,
+  type CollaboratorPermission,
+} from "../api/collaborate";
 import CalendarDisplay from "./CalendarDisplay";
 
 /*
@@ -58,6 +67,17 @@ function parseDateOnly(date: string): Date {
     return time ? `${time[1]}:${time[2]}` : dateTime;
   }
 
+function getCurrentUserId(): number | null {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") ?? "null") as {
+      id?: number;
+    } | null;
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function ItineraryPage() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -76,6 +96,15 @@ function ItineraryPage() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [collaboratorEmail, setCollaboratorEmail] = useState("");
+  const [collaboratorPermission, setCollaboratorPermission] =
+    useState<CollaboratorPermission>("editor");
+  const [isLoadingCollaborators, setIsLoadingCollaborators] = useState(false);
+  const [isInvitingCollaborator, setIsInvitingCollaborator] = useState(false);
+  const [collaborationMessage, setCollaborationMessage] = useState("");
+  const [invitationLink, setInvitationLink] = useState("");
   const [tripName, setTripName] = useState("");
   const [tripDescription, setTripDescription] = useState("");
   const [tripStartDate, setTripStartDate] = useState("");
@@ -139,6 +168,44 @@ function ItineraryPage() {
   }, []);
 
   useEffect(() => {
+    const inviteValue = new URLSearchParams(window.location.search).get("invite");
+    const inviteTripId = Number(inviteValue);
+
+    if (!Number.isInteger(inviteTripId) || inviteTripId <= 0) {
+      return;
+    }
+
+    if (!localStorage.getItem("token")) {
+      const invitationPath = `/itinerary?invite=${encodeURIComponent(inviteValue ?? "")}`;
+      sessionStorage.setItem("redirectAfterLogin", invitationPath);
+      navigate(`/login?redirect=${encodeURIComponent(invitationPath)}`, {
+        replace: true,
+      });
+      return;
+    }
+
+    async function acceptSharedTrip() {
+      try {
+        setError("");
+        await acceptInvitation(inviteTripId);
+        const loadedTrips = await getUserTrips();
+        setTrips(loadedTrips);
+        setSelectedTripId(inviteTripId);
+        setCollaborationMessage("Trip invitation accepted.");
+        window.history.replaceState({}, "", "/itinerary");
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to accept trip invitation"
+        );
+      }
+    }
+
+    acceptSharedTrip();
+  }, [navigate]);
+
+  useEffect(() => {
     if (!selectedTrip) {
       setEvents([]);
       setSelectedDate(null);
@@ -184,7 +251,118 @@ function ItineraryPage() {
 
   function handleTripChange(event: React.ChangeEvent<HTMLSelectElement>) {
     resetEventForm();
+    setShowCollaboration(false);
+    setCollaborationMessage("");
     setSelectedTripId(Number(event.target.value));
+  }
+
+  async function loadCollaborators(tripId: number) {
+    try {
+      setIsLoadingCollaborators(true);
+      setError("");
+      setCollaborators(await getCollaborators(tripId));
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load collaborators"
+      );
+    } finally {
+      setIsLoadingCollaborators(false);
+    }
+  }
+
+  async function handleInviteCollaborator(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!selectedTrip) {
+      return;
+    }
+
+    try {
+      setIsInvitingCollaborator(true);
+      setError("");
+      setCollaborationMessage("");
+      await inviteCollaborator(
+        selectedTrip.id,
+        collaboratorEmail,
+        collaboratorPermission
+      );
+      const invitationUrl = new URL("/itinerary", window.location.origin);
+      invitationUrl.searchParams.set("invite", String(selectedTrip.id));
+      setCollaboratorEmail("");
+      setInvitationLink(invitationUrl.toString());
+      setCollaborationMessage(
+        "Invitation created for that account. Send them the link below."
+      );
+      await loadCollaborators(selectedTrip.id);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to invite collaborator"
+      );
+    } finally {
+      setIsInvitingCollaborator(false);
+    }
+  }
+
+  async function handlePermissionChange(
+    collaborator: Collaborator,
+    permission: CollaboratorPermission
+  ) {
+    try {
+      setError("");
+      await updateCollaboratorPermission(
+        collaborator.tripId,
+        collaborator.userId,
+        permission
+      );
+      setCollaborators((current) =>
+        current.map((item) =>
+          item.id === collaborator.id
+            ? { ...item, permissionLevel: permission }
+            : item
+        )
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to update permission"
+      );
+    }
+  }
+
+  async function handleRemoveCollaborator(collaborator: Collaborator) {
+    if (!window.confirm(`Remove ${collaborator.email} from this trip?`)) {
+      return;
+    }
+
+    try {
+      setError("");
+      await removeCollaborator(collaborator.tripId, collaborator.userId);
+      setCollaborators((current) =>
+        current.filter((item) => item.id !== collaborator.id)
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to remove collaborator"
+      );
+    }
+  }
+
+  async function handleCopyInvitationLink() {
+    if (!invitationLink) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(invitationLink);
+      setCollaborationMessage("Invitation link copied.");
+    } catch {
+      setError("Unable to copy the invitation link.");
+    }
   }
 
   function handleCalendarTripSelect(tripId: number) {
@@ -396,7 +574,9 @@ function ItineraryPage() {
             >
               {trips.map((trip) => (
                 <option key={trip.id} value={trip.id}>
-                  {trip.name}
+                  {trip.userId === getCurrentUserId() || !trip.ownerEmail
+                    ? trip.name
+                    : `${trip.name} -- ${trip.ownerEmail}`}
                 </option>
               ))}
             </select>
@@ -490,21 +670,148 @@ function ItineraryPage() {
             )}
           </div>
 
-          <button
-            className="primary-action"
-            type="button"
-            onClick={() => {
-              setError("");
-              if (showEventForm) {
-                resetEventForm();
-              } else {
-                setEditingEventId(null);
-                setShowEventForm(true);
-              }
-            }}
+          <div className="trip-summary-actions">
+            <button
+              className="secondary-action"
+              type="button"
+              aria-expanded={showCollaboration}
+              onClick={() => {
+                const willOpen = !showCollaboration;
+                setError("");
+                setCollaborationMessage("");
+                setInvitationLink("");
+                setShowCollaboration(willOpen);
+                if (willOpen) {
+                  loadCollaborators(selectedTrip.id);
+                }
+              }}
+            >
+              {showCollaboration ? "Close" : "Collaborate"}
+            </button>
+            <button
+              className="primary-action"
+              type="button"
+              onClick={() => {
+                setError("");
+                if (showEventForm) {
+                  resetEventForm();
+                } else {
+                  setEditingEventId(null);
+                  setShowEventForm(true);
+                }
+              }}
+            >
+              {showEventForm ? "Cancel" : "Add event"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {selectedTrip && showCollaboration && (
+        <section className="collaboration-panel">
+          <div>
+            <h2>Collaborate on this trip</h2>
+            <p>
+              Invite an existing itineFairy account to the entire trip.
+            </p>
+          </div>
+
+          <form
+            className="collaboration-form"
+            onSubmit={handleInviteCollaborator}
           >
-            {showEventForm ? "Cancel" : "Add event"}
-          </button>
+            <label>
+              Account email
+              <input
+                type="email"
+                value={collaboratorEmail}
+                onChange={(event) => setCollaboratorEmail(event.target.value)}
+                placeholder="traveller@example.com"
+                required
+              />
+            </label>
+            <label>
+              Permission
+              <select
+                value={collaboratorPermission}
+                onChange={(event) =>
+                  setCollaboratorPermission(
+                    event.target.value as CollaboratorPermission
+                  )
+                }
+              >
+                <option value="editor">Can edit</option>
+                <option value="viewer">View only</option>
+              </select>
+            </label>
+            <button
+              className="primary-action"
+              type="submit"
+              disabled={isInvitingCollaborator}
+            >
+              {isInvitingCollaborator ? "Inviting..." : "Invite"}
+            </button>
+          </form>
+
+          {collaborationMessage && (
+            <p className="collaboration-message">{collaborationMessage}</p>
+          )}
+          {invitationLink && (
+            <div className="invitation-link">
+              <input
+                aria-label="Invitation link"
+                type="text"
+                value={invitationLink}
+                readOnly
+                onFocus={(event) => event.target.select()}
+              />
+              <button
+                className="copy-invitation-button"
+                type="button"
+                onClick={handleCopyInvitationLink}
+              >
+                Copy link
+              </button>
+            </div>
+          )}
+
+          <div className="collaborator-list">
+            <h3>Invited collaborators</h3>
+            {isLoadingCollaborators && <p>Loading collaborators...</p>}
+            {!isLoadingCollaborators && collaborators.length === 0 && (
+              <p>No collaborators have been invited yet.</p>
+            )}
+            {collaborators.map((collaborator) => (
+              <div className="collaborator-row" key={collaborator.id}>
+                <div>
+                  <strong>{collaborator.email}</strong>
+                  <span>
+                    {collaborator.accepted ? "Accepted" : "Pending"}
+                  </span>
+                </div>
+                <select
+                  aria-label={`Permission for ${collaborator.email}`}
+                  value={collaborator.permissionLevel}
+                  onChange={(event) =>
+                    handlePermissionChange(
+                      collaborator,
+                      event.target.value as CollaboratorPermission
+                    )
+                  }
+                >
+                  <option value="editor">Can edit</option>
+                  <option value="viewer">View only</option>
+                </select>
+                <button
+                  className="remove-collaborator-button"
+                  type="button"
+                  onClick={() => handleRemoveCollaborator(collaborator)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
