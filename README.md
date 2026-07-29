@@ -116,7 +116,13 @@ python run.py
 The backend will usually run at:
 
 ```text
-http://localhost:5000
+http://localhost:5001
+```
+
+You may need to initialize the SQLite Database
+
+```text
+python init_db.py
 ```
 
 ## Running the Full App
