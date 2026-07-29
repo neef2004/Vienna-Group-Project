@@ -83,6 +83,8 @@ Previews the production build locally.
 
 ## Backend Setup
 
+### macOS/Linux
+
 Go into the backend folder:
 
 ```bash
@@ -113,6 +115,38 @@ Start the Flask server:
 python run.py
 ```
 
+### Windows PowerShell
+
+Go into the backend folder:
+
+```powershell
+cd backend
+```
+
+Create a virtual environment:
+
+```powershell
+py -m venv venv
+```
+
+Activate the virtual environment:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+Install backend dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Start the Flask server:
+
+```powershell
+python run.py
+```
+
 The backend will usually run at:
 
 ```text
@@ -134,6 +168,14 @@ Terminal 1:
 ```bash
 cd backend
 source venv/bin/activate
+python run.py
+```
+
+On Windows PowerShell, use this instead:
+
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
 python run.py
 ```
 
@@ -170,4 +212,3 @@ GET /api/health
 - Keep backend code inside `backend/`.
 - Do not commit `node_modules/`, virtual environments, cache folders, or `.env` files.
 - Add environment variable examples to `.env.example` instead of committing real secrets.
-
